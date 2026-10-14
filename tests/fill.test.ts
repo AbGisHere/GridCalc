@@ -1,11 +1,42 @@
 import { describe, expect, it } from 'vitest';
 import { History } from '../src/state/history';
-import { buildFill, fillTarget } from '../src/state/fill';
+import { buildFill, FillLimitError, fillTarget } from '../src/state/fill';
 import { single } from '../src/state/selection';
 
 const grid = (cells: Record<string, string>) => (r: number, c: number) => cells[`${r},${c}`] ?? '';
 
 describe('drag-to-fill', () => {
+  it('rejects a whole-sheet fill before reading or allocating cells', () => {
+    let reads = 0;
+    expect(() => buildFill(
+      { r1: 0, c1: 0, r2: 0, c2: 99 },
+      { r1: 0, c1: 0, r2: 99_999, c2: 99 },
+      () => { reads++; return '1'; },
+    )).toThrow(FillLimitError);
+    expect(reads).toBe(0);
+  });
+
+  it('allows the limit without allocating unchanged edits', () => {
+    expect(buildFill(
+      { r1: 0, c1: 0, r2: 0, c2: 99 },
+      { r1: 0, c1: 0, r2: 2499, c2: 99 },
+      () => '',
+    )).toEqual([]);
+  });
+
+  it('skips identical destinations while preserving clears and changed values', () => {
+    expect(buildFill(
+      { r1: 0, c1: 0, r2: 0, c2: 0 },
+      { r1: 0, c1: 0, r2: 2, c2: 0 },
+      grid({ '2,0': 'clear me' }),
+    )).toEqual([{ row: 2, col: 0, raw: '' }]);
+    expect(buildFill(
+      { r1: 0, c1: 0, r2: 0, c2: 0 },
+      { r1: 0, c1: 0, r2: 2, c2: 0 },
+      grid({ '0,0': '5', '1,0': '5', '2,0': '9' }),
+    )).toEqual([{ row: 2, col: 0, raw: '5' }]);
+  });
+
   it('picks the dominant drag direction', () => {
     const src = { r1: 0, c1: 0, r2: 0, c2: 0 };
     expect(fillTarget(src, { row: 5, col: 1 })).toEqual({ r1: 0, c1: 0, r2: 5, c2: 0 });

@@ -24,7 +24,7 @@ import { explainRuntimeError, parseFormula } from '@/engine/parser';
 import { normalizeFormula, shiftFormula } from '@/engine/references';
 import { CellError, displayValue } from '@/engine/values';
 import { parseCSV, parseTSV, toCSV } from '@/state/csv';
-import { buildFill } from '@/state/fill';
+import { buildFill, FillLimitError } from '@/state/fill';
 import { History } from '@/state/history';
 import { SAMPLE_SHEET, stressSheet } from '@/state/samples';
 import { clampPos, jump, selectionRange, single, type Selection } from '@/state/selection';
@@ -424,7 +424,15 @@ export default function Spreadsheet() {
   };
 
   const fill = (source: RangeBounds, target: RangeBounds) => {
-    apply(buildFill(source, target, (r, c) => engine.getRaw(r, c)), 'Fill');
+    let edits: CellEdit[];
+    try {
+      edits = buildFill(source, target, (r, c) => engine.getRaw(r, c));
+    } catch (error) {
+      if (!(error instanceof FillLimitError)) throw error;
+      say(error.message);
+      return;
+    }
+    apply(edits, 'Fill');
     setSel({ anchor: { row: target.r1, col: target.c1 }, head: { row: target.r2, col: target.c2 } });
   };
 

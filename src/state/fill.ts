@@ -3,6 +3,14 @@ import type { CellEdit } from '@/engine/engine';
 import { shiftFormula } from '@/engine/references';
 import { formatNumber, NUMBER_RE } from '@/engine/values';
 
+const MAX_FILL_CELLS = 250_000;
+
+export class FillLimitError extends RangeError {
+  constructor() {
+    super(`Fill is limited to ${MAX_FILL_CELLS.toLocaleString('en-US')} cells. Select a smaller range and try again.`);
+  }
+}
+
 /**
  * Where a fill drag ends up: the source range extended along whichever axis the
  * pointer moved furthest from it. Returns null while the pointer is still inside.
@@ -29,6 +37,7 @@ export function fillTarget(source: RangeBounds, pointer: CellPos): RangeBounds |
  *  - anything else is copied
  */
 export function buildFill(source: RangeBounds, target: RangeBounds, getRaw: (row: number, col: number) => string): CellEdit[] {
+  if ((target.r2 - target.r1 + 1) * (target.c2 - target.c1 + 1) > MAX_FILL_CELLS) throw new FillLimitError();
   const edits: CellEdit[] = [];
   const vertical = target.r1 !== source.r1 || target.r2 !== source.r2;
 
@@ -69,7 +78,7 @@ export function buildFill(source: RangeBounds, target: RangeBounds, getRaw: (row
       } else {
         raw = srcRaw;
       }
-      edits.push({ ...dest, raw });
+      if (raw !== getRaw(dest.row, dest.col)) edits.push({ ...dest, raw });
     }
   }
   return edits;

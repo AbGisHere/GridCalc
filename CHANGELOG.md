@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-10-15
+
+### Performance
+- Fill rejects ranges larger than 250,000 cells before reading or allocating edits, with an instruction to choose a smaller range. Unchanged destinations are omitted while preserving clears, formula shifts and series.
+
 ## [0.3.1] - 2026-10-15
 
 ### Fixed
