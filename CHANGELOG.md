@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.12] - 2026-10-15
+
+### Changed
+- The Demos menu explains before loading that a demo replaces the current sheet and Undo restores it.
+
 ## [0.2.11] - 2026-10-15
 
 ### Changed

@@ -881,8 +881,10 @@ export default function Spreadsheet() {
               </>
             }
           >
-            {(close) =>
-              DEMOS.map((d) => (
+            {(close) => (
+              <>
+                <p className="menu-note">Loading a demo replaces this sheet. Undo restores it.</p>
+                {DEMOS.map((d) => (
                 <button
                   key={d.label}
                   className="menu-item"
@@ -894,8 +896,9 @@ export default function Spreadsheet() {
                   <b>{d.label}</b>
                   <span>{d.detail}</span>
                 </button>
-              ))
-            }
+                ))}
+              </>
+            )}
           </ToolMenu>
         </div>
 

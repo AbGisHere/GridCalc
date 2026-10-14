@@ -440,6 +440,13 @@ button {
   font-size: var(--text-sm);
 }
 
+.menu-note {
+  margin: 6px 10px 10px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
 .column-width {
   display: grid;
   gap: 6px;
