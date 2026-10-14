@@ -34,6 +34,23 @@ jobs:
             echo "::error::Commits must not include a Claude/Anthropic Co-Authored-By trailer."
             exit 1
           fi
+      - name: Enforce "type(vX.Y.Z): message" subjects
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            RANGE="$HEAD"
+          else
+            RANGE="$BASE..$HEAD"
+          fi
+          PATTERN='^(feat|fix|docs|refactor|test|ci|chore|security|perf|style|build|revert)\(v[0-9]+\.[0-9]+\.[0-9]+\)!?: .+'
+          BAD=$(git log --no-merges --format='%an%x09%s' "$RANGE" | grep -v '^dependabot\[bot\]' | cut -f2- | grep -vE "$PATTERN" || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Commit subjects must look like 'feat(v0.1.2): message'. Offending commits:"
+            echo "$BAD"
+            exit 1
+          fi
 
   verify:
     name: Lint, typecheck, test, build
