@@ -143,6 +143,10 @@ public/                robots.txt, llms.txt
 | Ctrl/⌘ + D / R | Fill down / right |
 | F9 | Recalculate everything (re-rolls `RAND`) |
 
+## Roadmap
+
+Planned features, starting with sharing a sheet by link, are in [ROADMAP.md](ROADMAP.md).
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md). Release rules and the pre-release checklist are in [CLAUDE.md](CLAUDE.md).
