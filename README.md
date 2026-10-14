@@ -26,6 +26,7 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 - **Undo / redo** for every action, including fills, pastes and sheet loads.
 - Copy, cut and paste. Pasting inside the sheet re-targets formula references, and tab-separated data pastes in from Excel or Google Sheets.
 - Resizable columns, CSV import/export, and automatic saving to `localStorage`.
+- Custom 404 and error pages styled like the app's own error diagnostics.
 
 **Formula engine**
 - **96 functions** including `SUM`, `IF`, `VLOOKUP`, `XLOOKUP`, `INDEX`/`MATCH`, `SUMIFS`, `COUNTIFS`, `TEXTJOIN` and `TEXT`. See [docs/FUNCTIONS.md](docs/FUNCTIONS.md) for the full list.
@@ -80,6 +81,7 @@ npm run dev          # http://localhost:3000
 | `npm test` | Run the unit tests (parser, evaluator, functions, dependency graph, fill, history) |
 | `npm run typecheck` | TypeScript type check |
 | `npm run knip` | Report unused files, exports and dependencies |
+| `npm run check:h1` | Check that every built page has exactly one `<h1>` (run after `build`) |
 | `npm run docs:functions` | Regenerate `docs/FUNCTIONS.md` from the function registry |
 
 On first load the app opens a **sample sheet** with working formulas and one example of each error type. Click the red cells to see their diagnostics. Use **10k-row stress test** in the toolbar to load 60,000 cells and 30,000 formulas.
@@ -107,7 +109,7 @@ See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the full explanation. I
 
 ```
 src/
-  app/                 Next.js App Router entry (layout, page, global styles)
+  app/                 Next.js App Router entry (layout, page, 404/error pages, global styles)
   engine/              Framework-free calculation engine
     lexer.ts           Tokenizer with positions and typo diagnostics
     parser.ts          Pratt parser, validation, verified fix suggestions

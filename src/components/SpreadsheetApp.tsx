@@ -8,7 +8,12 @@ import dynamic from 'next/dynamic';
  */
 const Spreadsheet = dynamic(() => import('./Spreadsheet'), {
   ssr: false,
-  loading: () => <div className="boot">Loading GridCalc…</div>,
+  loading: () => (
+    <main className="boot">
+      <h1 className="brand-name">GridCalc</h1>
+      <p>Loading…</p>
+    </main>
+  ),
 });
 
 export default function SpreadsheetApp() {

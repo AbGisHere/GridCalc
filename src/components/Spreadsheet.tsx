@@ -693,7 +693,7 @@ export default function Spreadsheet() {
               <rect x="7.5" y="7.5" width="5" height="5" fill="var(--bg)" />
             </svg>
           </span>
-          <span className="brand-name">GridCalc</span>
+          <h1 className="brand-name">GridCalc</h1>
         </div>
 
         <div className="tool-group">

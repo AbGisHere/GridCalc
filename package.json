@@ -1,7 +1,7 @@
 {
   "name": "gridcalc",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A virtualized spreadsheet web app with a custom formula parser, evaluator and dependency-aware recalculation engine.",
   "type": "module",
   "scripts": {
@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "docs:functions": "tsx scripts/gen-function-docs.ts",
-    "knip": "knip"
+    "knip": "knip",
+    "check:h1": "tsx scripts/check-h1.ts"
   },
   "dependencies": {
     "next": "^16.4.0",
