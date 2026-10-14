@@ -5,6 +5,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-10-15
+
+### Changed
+- Formula suggestions fit the space beside the name box on narrow screens. Long function signatures, examples and search-empty messages wrap inside the reference panel, whose search field keeps its height.
+- Toolbar popups dismiss when keyboard focus leaves them. Search retains a visible keyboard focus ring, and column-width, edit and panel-close controls have consistent hover feedback.
+
 ## [0.2.5] - 2026-10-15
 
 ### Changed

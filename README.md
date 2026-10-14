@@ -21,7 +21,7 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 - Keyboard navigation: arrows, Tab, Enter, Home, Ctrl+Home/End, Page Up/Down, and Ctrl+Arrow to jump to the edge of the data.
 - In-cell editing and a **formula bar** with syntax highlighting. Each colour-coded reference matches the border drawn around its cells in the grid, with a separate set of reference colours for the light and dark themes so the text stays readable (at least 4.5:1) in both.
 - **Click cells while typing a formula** to insert references. Drag to insert a range.
-- **Function autocomplete** and a signature hint that highlights the argument you are currently typing.
+- **Function autocomplete** and a signature hint that highlights the argument you are currently typing. Suggestions fit beside the name box on narrow screens; long signatures and examples wrap within the function reference panel.
 - **Drag-to-fill**: formulas are copied with relative references shifted, numeric series are continued, and numbered text counts up. Ctrl+D / Ctrl+R fill down / right.
 - **Undo / redo** for every action, including fills, pastes and sheet loads. Replacing the whole sheet (a demo, a CSV import or Clear) puts an **Undo** button next to its message in the status bar, so there is no confirmation dialog.
 - Copy, cut and paste. Pasting inside the sheet re-targets formula references, and tab-separated data pastes in from Excel or Google Sheets.
@@ -33,6 +33,7 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 - A **recalculation wave**: after an edit, the recalculated cells light up one dependency level after another, so you can see which cells depended on it. With reduce-motion on it's a single gentle fade, and the copied range's marching ants stand still.
 - Color reinforces the workspace hierarchy across all three themes: green for selection and saved state, blue engine labels, amber saving status, and red errors with tinted cells. Status text and error codes remain visible alongside color.
 - Custom 404 and error pages styled like the app's own error diagnostics.
+- Toolbar popups dismiss when keyboard focus leaves them; function search keeps a visible focus ring, and editing and panel controls provide hover feedback.
 - **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar and sheet, the active cell and its value are announced, status messages such as "Sheet cleared" are read out and stay up while you hover or focus them, an error cell is read with its one-line explanation, the toolbar, formula bar, sheet, diagnostics and status bar are each a landmark, autocomplete is a proper combobox, and every control shows a visible focus ring.
 
 **Formula engine**

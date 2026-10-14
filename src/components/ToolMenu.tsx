@@ -42,7 +42,13 @@ export function ToolMenu({ label, title, className, children }: ToolMenuProps) {
   }, [open]);
 
   return (
-    <div className={'menu-wrap' + (className ? ` ${className}` : '')} ref={wrapRef}>
+    <div
+      className={'menu-wrap' + (className ? ` ${className}` : '')}
+      ref={wrapRef}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false);
+      }}
+    >
       <button
         ref={buttonRef}
         className={'tool' + (open ? ' on' : '')}

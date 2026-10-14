@@ -472,6 +472,17 @@ button {
   cursor: pointer;
 }
 
+.column-width button:hover,
+.edit-actions button:hover,
+.icon-btn:hover {
+  background: var(--surface-2);
+}
+
+.edit-actions .apply-edit:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
 .shortcuts .menu-pop {
   width: 400px;
   padding: 8px 12px;
@@ -656,6 +667,11 @@ button {
 /* At the gutter, less the popup's border, so the suggestions' names line up with the formula bar's text. */
 .assist-anchor.bar {
   left: calc(var(--gutter) - 1px);
+  width: calc(100% - var(--gutter) + 1px);
+}
+
+.assist-anchor.bar .assist {
+  max-width: min(520px, 100%);
 }
 
 .assist {
@@ -718,6 +734,7 @@ button {
 
 .sig-line {
   font: var(--text-base) var(--mono);
+  overflow-wrap: anywhere;
 }
 
 .sig-active {
@@ -1297,13 +1314,13 @@ button {
 }
 
 .fn-search {
+  flex-shrink: 0;
   margin: 4px 14px 8px;
   padding: 7px 10px;
   border: 1px solid var(--border);
   border-radius: 7px;
   background: var(--bg);
   color: var(--fg);
-  outline: none;
 }
 
 .fn-search:focus {
@@ -1311,6 +1328,7 @@ button {
 }
 
 .fn-list {
+  min-height: 0;
   overflow-y: auto;
   padding: 0 8px 16px;
 }
@@ -1343,6 +1361,7 @@ button {
 .fn-sig {
   font: 600 var(--text-sm) var(--mono);
   color: var(--accent-strong);
+  overflow-wrap: anywhere;
 }
 
 .fn-desc {
@@ -1354,11 +1373,13 @@ button {
 .fn-example {
   font: var(--text-sm) var(--mono);
   color: var(--muted);
+  overflow-wrap: anywhere;
 }
 
 .fn-empty {
   color: var(--muted);
   padding: 12px;
+  overflow-wrap: anywhere;
 }
 
 /* ------------------------------------------------------------------ status bar */
@@ -1557,8 +1578,7 @@ button {
     grid-column: 1 / -1;
   }
   .diag-message,
-  .diag-suggestion,
-  .sig-line {
+  .diag-suggestion {
     overflow-wrap: anywhere;
   }
   .diag-fix {
