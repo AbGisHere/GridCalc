@@ -32,7 +32,7 @@ Competition requirements it must visibly satisfy:
 
 - Live at https://gridcalc.abgupta.me (Vercel); source at https://github.com/AbGisHere/GridCalc.
 - First load opens a sample sheet with working formulas and one example of each error type; the red cells are the entry point to the diagnostics panel.
-- A "10k-row stress test" toolbar action loads 60,000 cells and 30,000 formulas to demonstrate scale.
+- A "10k-row stress test" entry in the toolbar's Demos menu loads 60,000 cells and 30,000 formulas to demonstrate scale.
 - Judges may read the README, `docs/ARCHITECTURE.md` and `docs/FUNCTIONS.md` alongside the app.
 
 ## Capabilities and Constraints

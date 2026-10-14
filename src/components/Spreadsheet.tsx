@@ -32,7 +32,9 @@ import { comboboxAttrs, FormulaAssist } from './FormulaAssist';
 import { FormulaBar } from './FormulaBar';
 import { assistAt, canInsertRef, formulaRefs } from './formulaTokens';
 import { FunctionsPanel } from './FunctionsPanel';
-import { defaultColumnWidths, ROW_HEIGHT } from './geometry';
+import { Icon } from './Icon';
+import { ToolMenu } from './ToolMenu';
+import { defaultColumnWidths, fittedColumnWidths, ROW_HEIGHT } from './geometry';
 import { Grid, type DragMode, type GridHandle } from './Grid';
 import { StatusBar, type SelectionStats } from './StatusBar';
 
@@ -62,12 +64,32 @@ interface EditState {
   target: 'cell' | 'bar';
 }
 
+/** Status-bar message; `undo` offers to reverse the action that produced it (replacing the whole sheet). */
+interface Toast {
+  text: string;
+  undo?: boolean;
+}
+
 interface Clip {
   range: RangeBounds;
   raws: string[][];
   text: string;
   cut: boolean;
 }
+
+/** Column widths for a freshly loaded sheet: each column as wide as its longest value. */
+const contentWidths = (engine: SpreadsheetEngine) =>
+  fittedColumnWidths(
+    Object.keys(engine.toJSON()).map((a1) => {
+      const p = parseA1(a1)!;
+      return { col: p.col, text: displayValue(engine.getValue(p.row, p.col)) };
+    }),
+  );
+
+const DEMOS = [
+  { label: 'Sample sheet', detail: 'Working formulas, then one of each error to fix', data: () => SAMPLE_SHEET },
+  { label: '10k-row stress test', detail: '60,000 cells and 30,000 formulas', data: stressSheet },
+];
 
 const SHORTCUTS: [string, string][] = [
   ['Arrows / Tab / Enter', 'Move, or start editing (Enter / F2)'],
@@ -104,11 +126,11 @@ export default function Spreadsheet() {
   const [assistOff, setAssistOff] = useState(false);
   const [colWidths, setColWidths] = useState(defaultColumnWidths);
   const [showFns, setShowFns] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
   const [diagHidden, setDiagHidden] = useState(false);
   const [copyRange, setCopyRange] = useState<RangeBounds | null>(null);
   const [rendered, setRendered] = useState(0);
-  const [toast, setToast] = useState<string>();
+  const [toast, setToast] = useState<Toast>();
+  const say = (text: string) => setToast({ text });
   const [loaded, setLoaded] = useState(false);
 
   const gridRef = useRef<GridHandle>(null);
@@ -118,13 +140,10 @@ export default function Spreadsheet() {
   const toolbarRef = useRef<HTMLElement>(null);
   const barWrapRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLElement>(null);
-  const helpRef = useRef<HTMLDivElement>(null);
-  const helpButtonRef = useRef<HTMLButtonElement>(null);
   /** Set by Escape on the grid: the next Tab leaves the sheet instead of moving to the next cell. */
   const tabOut = useRef(false);
   const saveWarned = useRef(false);
   const assistId = useId();
-  const helpId = useId();
   const refInsert = useRef<{ start: number; end: number; anchor: CellPos } | null>(null);
   const lastDrag = useRef('');
   const clipboard = useRef<Clip | null>(null);
@@ -135,10 +154,11 @@ export default function Spreadsheet() {
   // ------------------------------------------------------------------ persistence
   useEffect(() => {
     let data: Record<string, string> | null = null;
+    let widths: string | null = null;
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) data = parseSavedSheet(saved);
-      const widths = localStorage.getItem(WIDTHS_KEY);
+      widths = localStorage.getItem(WIDTHS_KEY);
       if (widths) {
         const w: unknown = JSON.parse(widths);
         if (Array.isArray(w) && w.length === SHEET_COLS && w.every((n) => Number.isFinite(n) && n > 0)) setColWidths(w);
@@ -147,6 +167,7 @@ export default function Spreadsheet() {
       data = null;
     }
     engine.load(data ?? SAMPLE_SHEET);
+    if (!widths) setColWidths(contentWidths(engine));
     setLoaded(true);
     gridRef.current?.focus();
   }, [engine]);
@@ -158,7 +179,7 @@ export default function Spreadsheet() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(engine.toJSON()));
       } catch {
         // Storage full or unavailable: the sheet still works, it just won't survive a reload. Say so once.
-        if (!saveWarned.current) setToast("Autosave failed: browser storage is full or blocked. Export a CSV to keep this sheet.");
+        if (!saveWarned.current) say("Autosave failed: browser storage is full or blocked. Export a CSV to keep this sheet.");
         saveWarned.current = true;
       }
     }, 500);
@@ -175,30 +196,11 @@ export default function Spreadsheet() {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(undefined), 3500);
+    const t = setTimeout(() => setToast(undefined), toast.undo ? 8000 : 3500);
     return () => clearTimeout(t);
   }, [toast]);
 
   useEffect(() => setDiagHidden(false), [active.row, active.col]);
-
-  // The shortcuts popover closes on Escape (returning focus to its button) or on a click outside it.
-  useEffect(() => {
-    if (!showHelp) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      setShowHelp(false);
-      helpButtonRef.current?.focus();
-    };
-    const onDown = (e: MouseEvent) => {
-      if (!helpRef.current?.contains(e.target as Node)) setShowHelp(false);
-    };
-    window.addEventListener('keydown', onKey);
-    window.addEventListener('mousedown', onDown);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      window.removeEventListener('mousedown', onDown);
-    };
-  }, [showHelp]);
 
   // ------------------------------------------------------------------ edits & history
   const apply = useCallback(
@@ -206,10 +208,13 @@ export default function Spreadsheet() {
       const changes = edits
         .map((e) => ({ ...e, before: engine.getRaw(e.row, e.col) }))
         .filter((e) => e.before !== e.raw);
-      if (!changes.length) return;
+      if (!changes.length) return false;
       history.push({ label, edits: changes, selection: sel });
       engine.setCells(changes);
+      // A newer edit makes a pending "Undo" in the status bar point at the wrong action.
+      setToast((t) => (t?.undo ? undefined : t));
       bumpHistory();
+      return true;
     },
     [engine, history, sel],
   );
@@ -221,7 +226,7 @@ export default function Spreadsheet() {
     engine.setCells(r.edits);
     setSel(r.entry.selection);
     gridRef.current?.scrollIntoView(r.entry.selection.anchor);
-    setToast(`Undid: ${r.entry.label}`);
+    say(`Undid: ${r.entry.label}`);
     bumpHistory();
   };
 
@@ -231,13 +236,14 @@ export default function Spreadsheet() {
     setEdit(null);
     engine.setCells(r.edits);
     setSel(r.entry.selection);
-    setToast(`Redid: ${r.entry.label}`);
+    say(`Redid: ${r.entry.label}`);
     bumpHistory();
   };
 
   const replaceSheet = (data: Record<string, string>, label: string) => {
     const edits: CellEdit[] = [];
     const current = engine.toJSON();
+    const hadCells = engine.cellCount > 0;
     for (const a1 of Object.keys(current)) {
       if (!(a1 in data)) {
         const p = parseA1(a1)!;
@@ -249,12 +255,16 @@ export default function Spreadsheet() {
       if (p) edits.push({ row: p.row, col: p.col, raw });
     }
     setEdit(null);
-    apply(edits, label);
+    const replaced = apply(edits, label);
+    // A new sheet gets a fresh layout: columns sized to their contents, so no value is cut off.
+    setColWidths(contentWidths(engine));
     setSel(single(0, 0));
     gridRef.current?.scrollIntoView({ row: 0, col: 0 });
     gridRef.current?.focus();
     const s = engine.lastStats;
-    if (s) setToast(`${label}: ${engine.cellCount.toLocaleString()} cells, ${s.evaluated.toLocaleString()} formulas evaluated in ${s.ms.toFixed(0)} ms`);
+    const text = !engine.cellCount ? 'Sheet cleared' : s ? `${label}: ${engine.cellCount.toLocaleString()} cells, ${s.evaluated.toLocaleString()} formulas evaluated in ${s.ms.toFixed(0)} ms` : label;
+    // No confirmation step: replacing the sheet is one undoable edit, and the message offers the undo right there.
+    setToast({ text, undo: hadCells && replaced });
   };
 
   // ------------------------------------------------------------------ editing
@@ -465,7 +475,7 @@ export default function Spreadsheet() {
     } else if (key === 'F9') {
       e.preventDefault();
       const s = engine.recalculateAll();
-      setToast(`Recalculated all ${s.evaluated.toLocaleString()} formulas in ${s.ms.toFixed(1)} ms`);
+      say(`Recalculated all ${s.evaluated.toLocaleString()} formulas in ${s.ms.toFixed(1)} ms`);
     } else if (key === 'Home') {
       e.preventDefault();
       const next = mod ? { row: 0, col: 0 } : { row: active.row, col: 0 };
@@ -495,7 +505,7 @@ export default function Spreadsheet() {
     const r = selectionRange(sel);
     const area = (r.r2 - r.r1 + 1) * (r.c2 - r.c1 + 1);
     if (area > MAX_CLIPBOARD_CELLS) {
-      setToast(`Selection too large to copy (${area.toLocaleString()} cells).`);
+      say(`Selection too large to copy (${area.toLocaleString()} cells).`);
       return;
     }
     const raws: string[][] = [];
@@ -515,7 +525,7 @@ export default function Spreadsheet() {
     e.preventDefault();
     clipboard.current = { range: r, raws, text, cut };
     setCopyRange(r);
-    setToast(`${cut ? 'Cut' : 'Copied'} ${rangeToA1(r)}`);
+    say(`${cut ? 'Cut' : 'Copied'} ${rangeToA1(r)}`);
   };
 
   const onPaste = (e: React.ClipboardEvent) => {
@@ -598,7 +608,7 @@ export default function Spreadsheet() {
       focusInputAt(fix.length);
     } else {
       apply([{ row: active.row, col: active.col, raw: fix }], `Fix ${activeAddress}`);
-      setToast(`Applied fix to ${activeAddress}`);
+      say(`Applied fix to ${activeAddress}`);
       gridRef.current?.focus();
     }
   };
@@ -606,7 +616,7 @@ export default function Spreadsheet() {
   const goTo = (text: string): boolean => {
     const r = parseRangeA1(text);
     if (!r) {
-      setToast(`"${text}" is not a valid cell or range.`);
+      say(`"${text}" is not a valid cell or range.`);
       return false;
     }
     setEdit(null);
@@ -644,7 +654,7 @@ export default function Spreadsheet() {
 
   const exportCSV = () => {
     const b = engine.usedBounds();
-    if (!b) return setToast('The sheet is empty.');
+    if (!b) return say('The sheet is empty.');
     const rows: string[][] = [];
     for (let r = 0; r <= b.r2; r++) {
       const row: string[] = [];
@@ -660,12 +670,12 @@ export default function Spreadsheet() {
   };
 
   const importCSV = async (file: File) => {
-    if (file.size > MAX_IMPORT_MB * 1024 * 1024) return setToast(`${file.name} is larger than ${MAX_IMPORT_MB} MB, so it wasn't imported.`);
+    if (file.size > MAX_IMPORT_MB * 1024 * 1024) return say(`${file.name} is larger than ${MAX_IMPORT_MB} MB, so it wasn't imported.`);
     let rows: string[][];
     try {
       rows = parseCSV(await file.text());
     } catch {
-      return setToast(`Couldn't read ${file.name}. Check that it's a text CSV file.`);
+      return say(`Couldn't read ${file.name}. Check that it's a text CSV file.`);
     }
     const data: Record<string, string> = {};
     let clipped = false;
@@ -677,7 +687,7 @@ export default function Spreadsheet() {
       }),
     );
     replaceSheet(data, `Import ${file.name}`);
-    if (clipped) setToast(`Imported ${file.name}. Cells outside A1:${LAST_CELL_A1} were left out.`);
+    if (clipped) setToast((t) => ({ text: `Imported ${file.name}. Cells outside A1:${LAST_CELL_A1} were left out.`, undo: t?.undo }));
   };
 
   /** F6 / Shift+F6 cycle focus between the toolbar, the name box and the sheet, as in desktop spreadsheets. */
@@ -817,31 +827,51 @@ export default function Spreadsheet() {
 
         <div className="tool-group">
           <button className="tool" onClick={undo} disabled={!history.canUndo} title={`Undo ${history.peekUndoLabel() ?? ''} (Ctrl/⌘+Z)`}>
-            ↶ Undo
+            <Icon name="undo" />
+            <span className="tool-label">Undo</span>
           </button>
           <button className="tool" onClick={redo} disabled={!history.canRedo} title={`Redo ${history.peekRedoLabel() ?? ''} (Ctrl/⌘+Y)`}>
-            ↷ Redo
+            <Icon name="redo" />
+            <span className="tool-label">Redo</span>
           </button>
         </div>
 
         <div className="tool-group">
-          <button className="tool" onClick={() => replaceSheet(SAMPLE_SHEET, 'Sample sheet')}>
-            Sample sheet
-          </button>
-          <button className="tool" onClick={() => replaceSheet(stressSheet(), '10k-row stress test')} title="Load 10,000 rows (60,000+ cells, 30,000 formulas)">
-            10k-row stress test
-          </button>
-          <button className="tool" onClick={() => replaceSheet({}, 'Clear sheet')}>
-            Clear
-          </button>
+          <ToolMenu
+            title="Demo sheets"
+            label={
+              <>
+                Demos
+                <Icon name="chevron" />
+              </>
+            }
+          >
+            {(close) =>
+              DEMOS.map((d) => (
+                <button
+                  key={d.label}
+                  className="menu-item"
+                  onClick={() => {
+                    close();
+                    replaceSheet(d.data(), d.label);
+                  }}
+                >
+                  <b>{d.label}</b>
+                  <span>{d.detail}</span>
+                </button>
+              ))
+            }
+          </ToolMenu>
         </div>
 
         <div className="tool-group">
           <button className="tool" onClick={() => fileRef.current?.click()}>
-            Import CSV
+            <Icon name="import" />
+            <span className="tool-label">Import CSV</span>
           </button>
           <button className="tool" onClick={exportCSV}>
-            Export CSV
+            <Icon name="export" />
+            <span className="tool-label">Export CSV</span>
           </button>
           <input
             ref={fileRef}
@@ -857,34 +887,23 @@ export default function Spreadsheet() {
         </div>
 
         <div className="tool-group right">
-          <button className={'tool' + (showFns ? ' on' : '')} onClick={() => setShowFns((v) => !v)}>
-            ƒ Functions
+          <button className="tool" onClick={() => replaceSheet({}, 'Clear sheet')} disabled={!engine.cellCount}>
+            Clear
           </button>
-          <div className="help-wrap" ref={helpRef}>
-            <button
-              ref={helpButtonRef}
-              className={'tool' + (showHelp ? ' on' : '')}
-              onClick={() => setShowHelp((v) => !v)}
-              aria-expanded={showHelp}
-              aria-controls={helpId}
-            >
-              ⌨ Shortcuts
-            </button>
-            {showHelp && (
-              <div className="help-pop" id={helpId} role="region" aria-label="Keyboard shortcuts">
-                <table>
-                  <tbody>
-                    {SHORTCUTS.map(([k, d]) => (
-                      <tr key={k}>
-                        <th>{k}</th>
-                        <td>{d}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          <ToolMenu className="end shortcuts" title="Keyboard shortcuts" label="Shortcuts">
+            {() => (
+              <table>
+                <tbody>
+                  {SHORTCUTS.map(([k, d]) => (
+                    <tr key={k}>
+                      <th>{k}</th>
+                      <td>{d}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
-          </div>
+          </ToolMenu>
         </div>
       </header>
 
@@ -903,6 +922,7 @@ export default function Spreadsheet() {
           onChange={(value, pos) => (edit ? changeEdit(value, pos) : startEdit(active, value, 'edit', 'bar'))}
           onCaret={setCaret}
           onKeyDown={onEditorKeyDown}
+          functionsOpen={showFns}
           onToggleFunctions={() => setShowFns((v) => !v)}
         />
         {edit?.target === 'bar' && assist && (
@@ -971,7 +991,8 @@ export default function Spreadsheet() {
         usedCells={engine.cellCount}
         errors={errorKeys.length}
         onNextError={() => jumpToError(false)}
-        message={toast}
+        message={toast?.text}
+        onUndo={toast?.undo ? undo : undefined}
       />
     </div>
   );

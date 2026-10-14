@@ -222,12 +222,29 @@ button {
 }
 
 .tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
   border: 1px solid transparent;
   background: transparent;
   padding: 5px 9px;
   border-radius: 6px;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.icon {
+  flex: none;
+}
+
+.tool .icon {
+  color: var(--muted);
+}
+
+.tool:hover:not(:disabled) .icon,
+.tool.on .icon {
+  color: inherit;
 }
 
 .tool:hover:not(:disabled) {
@@ -244,25 +261,57 @@ button {
   cursor: default;
 }
 
-.help-wrap {
+.menu-wrap {
   position: relative;
 }
 
-.help-pop {
+.menu-pop {
   position: absolute;
-  right: 0;
+  left: 0;
   top: calc(100% + 6px);
   z-index: 50;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: var(--shadow);
-  padding: 8px 12px;
-  width: 400px;
+  padding: 4px;
+  width: 300px;
   max-width: calc(100vw - 24px);
 }
 
-.help-pop th {
+.menu-wrap.end .menu-pop {
+  left: auto;
+  right: 0;
+}
+
+.menu-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: var(--surface-2);
+}
+
+.menu-item span {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.shortcuts .menu-pop {
+  width: 400px;
+  padding: 8px 12px;
+}
+
+.menu-pop th {
   text-align: left;
   font-weight: 600;
   padding: 4px 12px 4px 0;
@@ -270,7 +319,7 @@ button {
   vertical-align: top;
 }
 
-.help-pop td {
+.menu-pop td {
   color: var(--muted);
   padding: 4px 0;
 }
@@ -315,8 +364,13 @@ button {
   font-size: 14px;
 }
 
-.fx-button:hover {
+.fx-button:hover,
+.fx-button.on {
   color: var(--accent);
+}
+
+.fx-button.on {
+  background: var(--accent-soft);
 }
 
 .fb-field {
@@ -623,11 +677,6 @@ button {
   width: 1px;
   background: var(--grid-line);
   pointer-events: none;
-}
-
-/* Text spilling over empty neighbours, as in other spreadsheets: hides the column lines it crosses, not the row line or its own right edge. */
-.cell.spill {
-  background: linear-gradient(var(--bg), var(--bg)) 0 0 / calc(100% - 1px) 25px no-repeat;
 }
 
 .cell.num {
@@ -1028,6 +1077,7 @@ button {
 
 .status-left {
   min-width: 0;
+  align-items: center;
 }
 
 .status-right {
@@ -1068,6 +1118,24 @@ button {
   color: var(--fg);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+}
+
+.status-undo {
+  flex: none;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.status-undo:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .status-message {
@@ -1128,6 +1196,23 @@ button {
   .diag-body {
     grid-column: 1 / -1;
   }
+  /* One row on a phone: icon-only undo, redo and CSV buttons (the labels stay for screen readers), no shortcuts. */
+  .toolbar {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  .tool-group {
+    padding-left: 4px;
+  }
+  .tool {
+    min-width: 36px;
+    min-height: 36px;
+    justify-content: center;
+  }
+  .shortcuts {
+    display: none;
+  }
+  .tool-label,
   .toolbar .brand-name {
     position: absolute;
     width: 1px;

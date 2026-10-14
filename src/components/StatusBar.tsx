@@ -22,11 +22,13 @@ interface StatusBarProps {
   errors: number;
   onNextError(): void;
   message?: string;
+  /** Shown with the message when the action behind it can be reversed. */
+  onUndo?(): void;
 }
 
 const fmt = (n: number) => n.toLocaleString('en-US');
 
-export function StatusBar({ stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message }: StatusBarProps) {
+export function StatusBar({ stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message, onUndo }: StatusBarProps) {
   return (
     <footer className="status-bar">
       {errors > 0 && (
@@ -37,7 +39,14 @@ export function StatusBar({ stats, recalc, rendered, totalCells, usedCells, erro
       )}
       <div className="status-left">
         {message ? (
-          <span className="status-message">{message}</span>
+          <>
+            <span className="status-message">{message}</span>
+            {onUndo && (
+              <button className="status-undo" onClick={onUndo}>
+                Undo
+              </button>
+            )}
+          </>
         ) : stats && stats.numeric > 0 ? (
           <>
             <span>

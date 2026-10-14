@@ -25,10 +25,9 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 - **Click cells while typing a formula** to insert references. Drag to insert a range.
 - **Function autocomplete** and a signature hint that highlights the argument you are currently typing.
 - **Drag-to-fill**: formulas are copied with relative references shifted, numeric series are continued, and numbered text counts up. Ctrl+D / Ctrl+R fill down / right.
-- **Undo / redo** for every action, including fills, pastes and sheet loads.
+- **Undo / redo** for every action, including fills, pastes and sheet loads. Replacing the whole sheet (a demo, a CSV import or Clear) puts an **Undo** button next to its message in the status bar, so there is no confirmation dialog.
 - Copy, cut and paste. Pasting inside the sheet re-targets formula references, and tab-separated data pastes in from Excel or Google Sheets.
-- Long text spills over empty cells to its right instead of being cut off, as in other spreadsheets.
-- Resizable columns, CSV import/export, and automatic saving to `localStorage`.
+- Resizable columns, CSV import/export, and automatic saving to `localStorage`. Loading a sheet sizes each whole column to its longest value, so nothing starts cut off.
 - A status bar that shows the engine at work: how many cells the last edit recalculated and how long it took, and how many cells are in the DOM out of 10,000,000.
 - Custom 404 and error pages styled like the app's own error diagnostics.
 - **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar and sheet, the active cell and its value are announced, autocomplete is a proper combobox, and every control shows a visible focus ring.
@@ -92,7 +91,7 @@ npm run dev          # http://localhost:3000
 | `npm run check:h1` | Check that every built page has exactly one `<h1>` (run after `build`) |
 | `npm run docs:functions` | Regenerate `docs/FUNCTIONS.md` from the function registry |
 
-On first load the app opens a **sample sheet** with working formulas and one example of each error type. The errors with a one-click fix come first: click a red cell, or press **Next** in the status bar, to see its diagnosis. Use **10k-row stress test** in the toolbar to load 60,000 cells and 30,000 formulas.
+On first load the app opens a **sample sheet** with working formulas and one example of each error type. The errors with a one-click fix come first: click a red cell, or press **Next** in the status bar, to see its diagnosis. Use **Demos → 10k-row stress test** in the toolbar to load 60,000 cells and 30,000 formulas.
 
 ## Deployment
 

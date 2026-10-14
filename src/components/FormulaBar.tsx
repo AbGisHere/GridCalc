@@ -15,6 +15,7 @@ interface FormulaBarProps {
   onChange(value: string, caret: number): void;
   onCaret(caret: number): void;
   onKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void;
+  functionsOpen: boolean;
   onToggleFunctions(): void;
 }
 
@@ -66,7 +67,13 @@ export function FormulaBar(props: FormulaBarProps) {
           }
         }}
       />
-      <button className="fx-button" title="Browse functions" onClick={props.onToggleFunctions}>
+      <button
+        className={'fx-button' + (props.functionsOpen ? ' on' : '')}
+        title="Browse functions"
+        aria-label="Browse functions"
+        aria-expanded={props.functionsOpen}
+        onClick={props.onToggleFunctions}
+      >
         <i>ƒ</i>x
       </button>
       <div className={'fb-field' + (props.editing ? ' editing' : '')}>

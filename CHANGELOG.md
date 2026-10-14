@@ -5,6 +5,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.14] - 2026-10-14
+
+### Changed
+- A shorter toolbar: **Sample sheet** and **10k-row stress test** are now in one **Demos** menu, each with a line saying what it loads, and **Clear** sits on its own at the right. The **ƒ Functions** button is gone, because the **ƒx** button in the formula bar opens the same list (and now shows when it's open).
+- Replacing the whole sheet (a demo, a CSV import or Clear) asks for no confirmation. Instead, the status bar shows an **Undo** button next to the message for 8 seconds, or until you make another edit.
+- Undo, redo, import and export have drawn icons. On a phone they show only the icon (the label stays for screen readers), the shortcuts list is hidden, and the toolbar fits on one row instead of three.
+- Long text no longer spills over the empty cells to its right; a cell never grows on its own. Instead, loading a sheet sizes each whole column to its longest value, so the sample sheet and the stress test show every value in full.
+- Clear is disabled when the sheet is already empty.
+
 ## [0.1.13] - 2026-10-14
 
 ### Changed
