@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.11] - 2026-10-15
+
+### Changed
+- Failed autosave explains browser-storage availability and values-only CSV recovery inline, without relying on a tooltip. The status bar wraps the explanation and recovery action, and successful saving explicitly says it is in this browser.
+
 ## [0.2.10] - 2026-10-15
 
 ### Added
