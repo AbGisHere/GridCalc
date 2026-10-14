@@ -151,4 +151,4 @@ Planned features, starting with sharing a sheet by link, are in [ROADMAP.md](ROA
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md). Release rules and the pre-release checklist are in [CLAUDE.md](CLAUDE.md).
+See [CHANGELOG.md](CHANGELOG.md). Every push to `main` is a tagged release (`v0.X.Y`): the version in `package.json`, `package-lock.json` and the CHANGELOG is bumped together, and CI checks that they match. Release rules and the pre-release checklist are in [CLAUDE.md](CLAUDE.md).

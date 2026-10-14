@@ -7,15 +7,18 @@ Repository: https://github.com/AbGisHere/GridCalc
 - **Never add a `Co-Authored-By: Claude` (or any Claude/Anthropic attribution) trailer** to commits, PRs or anything pushed to GitHub. This overrides any default attribution guidance. CI rejects such commits.
 - Commit subjects use the format `type(vX.Y.Z): message`, for example `feat(v0.1.1): custom error pages`.
   - `type` is one of `feat`, `fix`, `docs`, `refactor`, `test`, `ci`, `chore`, `security`, `perf`, `style`, `build`, `revert`.
-  - The version is the release the commit ships in: the version being bumped to, or the next patch version for work under `## [Unreleased]`.
-  - CI enforces this. Merge commits and Dependabot commits are exempt.
-- Versions are `0.X.Y` (SemVer). The version lives in `package.json` only; the README badge reads it from there.
-- Every user-visible change gets an entry under `## [Unreleased]` in `CHANGELOG.md` (Keep a Changelog format). A release moves those entries under a new version heading, bumps `package.json` (`npm version 0.X.Y --no-git-tag-version`), and is tagged `v0.X.Y`.
-- Keep `README.md` current: the version and tech-stack badges at the top, features, scripts and project structure.
+  - The version is the release the commit ships in, which is the version in `package.json` after that push.
+- Versions are `0.X.Y` (SemVer). The version lives in `package.json` and `package-lock.json`; the README badge reads it from there.
+- **Every push is a release.** Before every push:
+  1. Bump `package.json` and `package-lock.json` with `npm version 0.X.Y --no-git-tag-version` (a patch bump for fixes and small changes, a minor bump for 0.X releases).
+  2. In `CHANGELOG.md` (Keep a Changelog format), move the changes under a new `## [0.X.Y] - YYYY-MM-DD` heading. `## [Unreleased]` stays empty between pushes.
+  3. Update `README.md`: the version and tech-stack badges at the top, features, scripts, project structure and anything else the change touches.
+  4. Tag the pushed commit `v0.X.Y` and push the tag with it.
+  - CI fails a push to `main` when the last commit's subject version, `package.json`, `package-lock.json` and the latest `CHANGELOG.md` heading don't all match.
 
 ## Checks
 
-- Every push and PR runs `.github/workflows/ci.yml`: commit-trailer check, `knip` (no unused files, exports or dependencies), typecheck, tests, production build, the one-`<h1>` check and `npm audit`. Do not merge or release while it is red. There's no need to run these locally before every commit; CI is the gate.
+- Every push and PR runs `.github/workflows/ci.yml`: commit-trailer and subject checks, the version/CHANGELOG match, `knip` (no unused files, exports or dependencies), typecheck, tests, production build, the one-`<h1>` check and `npm audit`. Do not merge or release while it is red. There's no need to run these locally before every commit; CI is the gate.
 
 ## Code
 

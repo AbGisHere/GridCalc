@@ -52,6 +52,20 @@ jobs:
             exit 1
           fi
 
+      - name: Version, lockfile and CHANGELOG match the release
+        if: github.event_name == 'push'
+        run: |
+          SUBJECT=$(git log -1 --no-merges --format=%s)
+          WANT=$(echo "$SUBJECT" | sed -nE 's/^[a-z]+\(v([0-9]+\.[0-9]+\.[0-9]+)\).*/\1/p')
+          PKG=$(node -p "require('./package.json').version")
+          LOCK=$(node -p "const l=require('./package-lock.json'); l.version === l.packages[''].version ? l.version : 'mismatch'")
+          LOG=$(grep -m1 -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | tr -d '#[] ')
+          echo "commit=$WANT package.json=$PKG package-lock.json=$LOCK CHANGELOG=$LOG"
+          if [ -n "$WANT" ] && { [ "$WANT" != "$PKG" ] || [ "$PKG" != "$LOCK" ] || [ "$PKG" != "$LOG" ]; }; then
+            echo "::error::Every push is a release: bump package.json/package-lock.json and add a CHANGELOG heading for the commit's version."
+            exit 1
+          fi
+
   verify:
     name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
