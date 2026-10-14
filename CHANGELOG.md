@@ -5,6 +5,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.13] - 2026-10-14
+
+### Changed
+- A type scale of four roles (11, 12, 13 and 14 px) as CSS tokens replaces the twelve one-off sizes (11.5, 12.5, 13.5 px and so on) used before.
+- The engine metrics in the status bar have labels: **Recalc**, **DOM cells** and **Used**, each with its value in bold.
+- On a phone the status bar wraps to two lines, so the Recalc and DOM cells metrics stay visible next to the error count. Before, everything but Recalc was hidden.
+- The suggested fix's formula is the same size as the formula above it, and both sit in full-width bands that line up with the formula bar's text.
+
+### Fixed
+- Secondary text (`--muted`) now has AA contrast: 5.3:1 on white and 5.0:1 on the toolbar and status bar, up from 4.3:1 and 4.0:1. The separate header text colour it now matches is gone.
+- On phones the formula bar, name box, cell editor and function search use 16 px text, so iOS Safari no longer zooms the page when you tap into them.
+
 ## [0.1.12] - 2026-10-14
 
 ### Added

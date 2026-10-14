@@ -64,18 +64,21 @@ export function StatusBar({ stats, recalc, rendered, totalCells, usedCells, erro
           <span className="muted">Ready</span>
         )}
       </div>
-      <div className="status-right">
+      <div className="status-right" aria-label="Engine">
         {recalc && (
-          <span title="Only cells downstream of an edit are re-evaluated">
-            Recalculated <b>{fmt(recalc.evaluated)}</b> cell{recalc.evaluated === 1 ? '' : 's'} in <b>{recalc.ms.toFixed(recalc.ms < 10 ? 2 : 0)} ms</b>
+          <span className="metric" title="Only cells downstream of an edit are re-evaluated">
+            <span className="metric-label">Recalc</span>
+            <b>{fmt(recalc.evaluated)}</b> cell{recalc.evaluated === 1 ? '' : 's'} in <b>{recalc.ms.toFixed(recalc.ms < 10 ? 2 : 0)} ms</b>
             {recalc.cycles > 0 && <span className="warn"> · {recalc.cycles} circular</span>}
           </span>
         )}
-        <span title="Virtualization: only visible cells exist in the DOM">
-          DOM cells <b>{fmt(rendered)}</b> / {fmt(totalCells)}
+        <span className="metric" title="Virtualization: only visible cells exist in the DOM">
+          <span className="metric-label">DOM cells</span>
+          <b>{fmt(rendered)}</b> of {fmt(totalCells)}
         </span>
-        <span>
-          Used <b>{fmt(usedCells)}</b>
+        <span className="metric metric-used">
+          <span className="metric-label">Used</span>
+          <b>{fmt(usedCells)}</b>
         </span>
       </div>
     </footer>
