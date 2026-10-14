@@ -5,6 +5,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-10-15
+
+### Changed
+- Phone and touch editing has visible Apply/Cancel controls; touch double-taps edit in the formula bar. Swipes scroll without selecting cells or starting mouse drag loops, while mouse and pen selection follow their initiating pointer.
+- The workspace follows software-keyboard viewport changes without overriding pinch zoom. Safe-area padding, compact name boxes, scrollable menus and suggestions, wrapping diagnostics and status text improve narrow and short layouts. Larger controls also apply to devices with both a mouse and touch input.
+
 ## [0.2.4] - 2026-10-15
 
 ### Changed

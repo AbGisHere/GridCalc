@@ -8,7 +8,7 @@ import { fillTarget } from '@/state/fill';
 import { selectionRange, type Selection } from '@/state/selection';
 import type { RefMark } from './formulaTokens';
 import { ColumnLayout, HEADER_HEIGHT, MIN_COL_WIDTH, ROW_HEADER_WIDTH, ROW_HEIGHT } from './geometry';
-import { trackPointer } from './pointer';
+import { trackPointer, trackTap } from './pointer';
 
 export type DragMode = 'select' | 'ref' | 'none';
 
@@ -32,7 +32,7 @@ interface GridProps {
   onSelect(sel: Selection): void;
   onPointerDown(pos: CellPos, shiftKey: boolean): DragMode;
   onPointerDrag(pos: CellPos, mode: DragMode): void;
-  onDoubleClick(pos: CellPos): void;
+  onDoubleClick(pos: CellPos, touch: boolean): void;
   onFill(source: RangeBounds, target: RangeBounds): void;
   onKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void;
   /** Reports how many cells are currently mounted, to show virtualization at work. */
@@ -63,6 +63,7 @@ export function Grid(props: GridProps) {
   const layout = useMemo(() => new ColumnLayout(colWidths), [colWidths]);
   const rows = engine.rows;
   const hintId = useId();
+  const pointerType = useRef('mouse');
 
   // Latest props for window-level listeners attached during drags.
   const live = useRef(props);
@@ -142,7 +143,7 @@ export function Grid(props: GridProps) {
 
   /** Shared drag loop for mouse, pen and touch: tracks the pointer, auto-scrolls near edges, reports cell positions. */
   const startDrag = useCallback(
-    (start: React.PointerEvent | React.MouseEvent, onMove: (pos: CellPos) => void, onEnd?: (committed: boolean) => void) => {
+    (start: React.PointerEvent, onMove: (pos: CellPos) => void, onEnd?: (committed: boolean) => void) => {
       let lastX = start.clientX;
       let lastY = start.clientY;
       let raf = 0;
@@ -178,9 +179,16 @@ export function Grid(props: GridProps) {
     [posFromClient],
   );
 
-  const onCellsMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
+  const onCellsPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0 || !e.isPrimary) return;
     const pos = posFromClient(e.clientX, e.clientY);
+    if (e.pointerType === 'touch') {
+      trackTap(e, () => {
+        const mode = live.current.onPointerDown(pos, e.shiftKey);
+        if (mode === 'select') scrollerRef.current?.focus({ preventScroll: true });
+      });
+      return;
+    }
     const mode = live.current.onPointerDown(pos, e.shiftKey);
     if (mode === 'ref') e.preventDefault(); // keep focus (and caret) in the formula editor
     if (mode === 'none') return;
@@ -192,6 +200,8 @@ export function Grid(props: GridProps) {
   };
 
   const onFillHandleDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    if (e.button !== 0 || !e.isPrimary) return;
     e.preventDefault();
     const source = selectionRange(live.current.selection);
     let target: RangeBounds | null = null;
@@ -210,6 +220,8 @@ export function Grid(props: GridProps) {
 
   /** Touch has no drag-to-select (a drag scrolls), so the grip drags the selection's top-left corner instead. */
   const onGripDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    if (e.button !== 0 || !e.isPrimary) return;
     e.preventDefault();
     const fixed = { row: sel.r2, col: sel.c2 };
     startDrag(e, (p) => live.current.onSelect({ anchor: fixed, head: p }));
@@ -227,8 +239,12 @@ export function Grid(props: GridProps) {
     scrollerRef.current?.focus({ preventScroll: true });
   };
 
-  const onHeaderMouseDown = (e: React.MouseEvent, kind: 'col' | 'row', index: number) => {
-    if (e.button !== 0) return;
+  const onHeaderPointerDown = (e: React.PointerEvent, kind: 'col' | 'row', index: number) => {
+    if (e.button !== 0 || !e.isPrimary) return;
+    if (e.pointerType === 'touch') {
+      trackTap(e, () => kind === 'col' ? selectColumns(index, e.shiftKey) : selectRows(index, e.shiftKey));
+      return;
+    }
     e.preventDefault();
     if (kind === 'col') {
       selectColumns(index, e.shiftKey);
@@ -242,6 +258,8 @@ export function Grid(props: GridProps) {
   };
 
   const onResizeStart = (e: React.PointerEvent, col: number) => {
+    e.stopPropagation();
+    if (e.button !== 0 || !e.isPrimary) return;
     e.preventDefault();
     const startX = e.clientX;
     const startW = colWidths[col];
@@ -310,10 +328,10 @@ export function Grid(props: GridProps) {
         key={c}
         className={'col-header' + (inSel ? (fullCols ? ' full' : ' in-sel') : '')}
         style={{ left: ROW_HEADER_WIDTH + layout.x(c), width: layout.width(c) }}
-        onMouseDown={(e) => onHeaderMouseDown(e, 'col', c)}
+        onPointerDown={(e) => onHeaderPointerDown(e, 'col', c)}
       >
         {colToLetters(c)}
-        <div className="col-resizer" onPointerDown={(e) => onResizeStart(e, c)} onMouseDown={stopMouse} />
+        <div className="col-resizer" onPointerDown={(e) => onResizeStart(e, c)} />
       </div>,
     );
   }
@@ -326,7 +344,7 @@ export function Grid(props: GridProps) {
         key={r}
         className={'row-header' + (inSel ? (fullRows ? ' full' : ' in-sel') : '')}
         style={{ top: r * ROW_HEIGHT }}
-        onMouseDown={(e) => onHeaderMouseDown(e, 'row', r)}
+        onPointerDown={(e) => onHeaderPointerDown(e, 'row', r)}
       >
         {r + 1}
       </div>,
@@ -343,6 +361,7 @@ export function Grid(props: GridProps) {
       tabIndex={0}
       onScroll={syncViewport}
       onKeyDown={props.onKeyDown}
+      onPointerDownCapture={(e) => { pointerType.current = e.pointerType; }}
       role="application"
       aria-roledescription="spreadsheet"
       aria-label="Spreadsheet"
@@ -357,9 +376,9 @@ export function Grid(props: GridProps) {
           <div
             className="corner"
             title="Select all"
-            onMouseDown={(e) => {
-              e.preventDefault();
+            onClick={() => {
               props.onSelect({ anchor: { row: 0, col: 0 }, head: { row: rows - 1, col: layout.count - 1 } });
+              scrollerRef.current?.focus({ preventScroll: true });
             }}
           />
           {colHeaders}
@@ -371,8 +390,8 @@ export function Grid(props: GridProps) {
           ref={cellsRef}
           className="cells"
           style={{ top: HEADER_HEIGHT, left: ROW_HEADER_WIDTH, width: layout.total, height: rows * ROW_HEIGHT }}
-          onMouseDown={onCellsMouseDown}
-          onDoubleClick={(e) => props.onDoubleClick(posFromClient(e.clientX, e.clientY))}
+          onPointerDown={onCellsPointerDown}
+          onDoubleClick={(e) => props.onDoubleClick(posFromClient(e.clientX, e.clientY), pointerType.current === 'touch')}
         >
           {vlines}
           <Fragment key={wave?.id}>{recalced}</Fragment>
@@ -386,20 +405,19 @@ export function Grid(props: GridProps) {
           {fillPreview && <div className="fill-preview" style={rect(fillPreview)} />}
           {!editing && (
             <>
-              <div className="sel-grip" style={{ left: selRect.left, top: selRect.top }} onPointerDown={onGripDown} onMouseDown={stopMouse} />
+              <div className="sel-grip" style={{ left: selRect.left, top: selRect.top }} onPointerDown={onGripDown} />
               <div
                 className="fill-handle"
                 title="Drag to fill"
                 style={{ left: selRect.left + selRect.width, top: selRect.top + selRect.height }}
                 onPointerDown={onFillHandleDown}
-                onMouseDown={stopMouse}
               />
             </>
           )}
           {editing && (
             <div
               className="editor-anchor"
-              onMouseDown={stopMouse}
+              onPointerDown={(e) => e.stopPropagation()}
               onDoubleClick={(e) => e.stopPropagation()}
               style={{ left: layout.x(active.col), top: active.row * ROW_HEIGHT, minWidth: layout.width(active.col), height: ROW_HEIGHT }}
             >
@@ -411,6 +429,3 @@ export function Grid(props: GridProps) {
     </div>
   );
 }
-
-/** Keeps a mouse press on a handle from also starting a selection in the cells or headers underneath. */
-const stopMouse = (e: React.MouseEvent) => e.stopPropagation();

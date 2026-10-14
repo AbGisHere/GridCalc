@@ -30,14 +30,14 @@ export function ToolMenu({ label, title, className, children }: ToolMenuProps) {
       setOpen(false);
       buttonRef.current?.focus();
     };
-    const onDown = (e: MouseEvent) => {
+    const onDown = (e: PointerEvent) => {
       if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
     };
     window.addEventListener('keydown', onKey);
-    window.addEventListener('mousedown', onDown);
+    window.addEventListener('pointerdown', onDown);
     return () => {
       window.removeEventListener('keydown', onKey);
-      window.removeEventListener('mousedown', onDown);
+      window.removeEventListener('pointerdown', onDown);
     };
   }, [open]);
 

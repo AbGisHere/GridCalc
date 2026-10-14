@@ -1,6 +1,6 @@
 /** Track only the initiating pointer; cancellation ends the gesture without committing it. */
-export function trackPointer(start: { pointerId?: number; clientX?: number }, onMove: (e: PointerEvent) => void, onEnd?: (committed: boolean) => void) {
-  const mine = (e: PointerEvent) => (start.pointerId !== undefined ? e.pointerId === start.pointerId : e.pointerType === 'mouse');
+export function trackPointer(start: { pointerId: number }, onMove: (e: PointerEvent) => void, onEnd?: (committed: boolean) => void) {
+  const mine = (e: PointerEvent) => e.pointerId === start.pointerId;
   const move = (e: PointerEvent) => {
     if (mine(e)) onMove(e);
   };
@@ -22,4 +22,14 @@ export function trackPointer(start: { pointerId?: number; clientX?: number }, on
   window.addEventListener('pointerup', release);
   window.addEventListener('pointercancel', cancel);
   window.addEventListener('blur', blur);
+}
+
+/** A finger may scroll the sheet; select only if it is released without moving or being cancelled. */
+export function trackTap(start: { pointerId: number; clientX: number; clientY: number }, onTap: () => void) {
+  let moved = false;
+  trackPointer(start, (event) => {
+    if (Math.hypot(event.clientX - start.clientX, event.clientY - start.clientY) > 8) moved = true;
+  }, (committed) => {
+    if (committed && !moved) onTap();
+  });
 }

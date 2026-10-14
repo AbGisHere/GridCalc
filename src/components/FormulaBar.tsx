@@ -52,6 +52,7 @@ export function FormulaBar(props: FormulaBarProps) {
         aria-label="Cell address — type a reference like B12 or A1:C5 and press Enter"
         value={nameText}
         spellCheck={false}
+        enterKeyHint="go"
         onFocus={(e) => {
           setNameFocused(true);
           e.target.select();
@@ -94,6 +95,7 @@ export function FormulaBar(props: FormulaBarProps) {
           value={value}
           spellCheck={false}
           autoComplete="off"
+          enterKeyHint="done"
           onFocus={props.onFocus}
           onChange={(e) => props.onChange(e.target.value, e.target.selectionStart ?? e.target.value.length)}
           onSelect={(e) => props.onCaret((e.target as HTMLInputElement).selectionStart ?? 0)}

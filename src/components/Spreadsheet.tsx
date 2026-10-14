@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import {
   cellKey,
   colToLetters,
@@ -142,6 +142,7 @@ export default function Spreadsheet() {
   const [loaded, setLoaded] = useState(false);
   const [savedVersion, setSavedVersion] = useState<number | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState<number>();
 
   const gridRef = useRef<GridHandle>(null);
   const cellInputRef = useRef<HTMLInputElement>(null);
@@ -159,6 +160,20 @@ export default function Spreadsheet() {
 
   const active = sel.anchor;
   const activeAddress = toA1(active.row, active.col);
+
+  // Safari's software keyboard resizes the visual viewport rather than the layout viewport.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const resize = () => setViewportHeight(viewport.scale === 1 ? Math.round(viewport.height) : undefined);
+    resize();
+    viewport.addEventListener('resize', resize);
+    return () => viewport.removeEventListener('resize', resize);
+  }, []);
+
+  useEffect(() => {
+    if (viewportHeight !== undefined && edit) gridRef.current?.scrollIntoView({ row: edit.row, col: edit.col });
+  }, [viewportHeight, edit?.row, edit?.col]);
 
   // ------------------------------------------------------------------ persistence
   useEffect(() => {
@@ -835,7 +850,11 @@ export default function Spreadsheet() {
 
   // ------------------------------------------------------------------ render
   return (
-    <div className="app" onKeyDown={onAppKeyDown}>
+    <div
+      className={'app' + (edit ? ' is-editing' : '') + (viewportHeight && viewportHeight < 520 ? ' short-viewport' : '')}
+      style={viewportHeight ? { '--app-height': `${viewportHeight}px` } as CSSProperties : undefined}
+      onKeyDown={onAppKeyDown}
+    >
       <header className="toolbar" ref={toolbarRef}>
         <div className="brand">
           <span className="brand-mark" aria-hidden>
@@ -986,6 +1005,13 @@ export default function Spreadsheet() {
           functionsOpen={showFns}
           onToggleFunctions={() => setShowFns((v) => !v)}
         />
+        {edit && (
+          <div className="edit-actions" role="group" aria-label="Finish editing">
+            <span>Editing <b>{toA1(edit.row, edit.col)}</b></span>
+            <button onPointerDown={(e) => e.preventDefault()} onClick={cancelEdit}>Cancel</button>
+            <button className="apply-edit" onPointerDown={(e) => e.preventDefault()} onClick={() => commitEdit()}>Apply</button>
+          </div>
+        )}
         {edit?.target === 'bar' && assist && (
           <div className="assist-anchor bar">
             <FormulaAssist id={assistId} info={assist} selected={assistSel} onPick={acceptSuggestion} />
@@ -1012,10 +1038,11 @@ export default function Spreadsheet() {
             }}
             onPointerDown={onPointerDown}
             onPointerDrag={onPointerDrag}
-            onDoubleClick={(pos) => {
+            onDoubleClick={(pos, touch) => {
               if (edit) return;
               setSel(single(pos.row, pos.col));
-              startEdit(pos, undefined, 'edit');
+              startEdit(pos, undefined, 'edit', touch ? 'bar' : 'cell');
+              if (touch) focusInputAt(engine.getRaw(pos.row, pos.col).length, 'bar');
             }}
             onFill={fill}
             onKeyDown={onGridKeyDown}
