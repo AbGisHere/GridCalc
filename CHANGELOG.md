@@ -5,6 +5,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-10-15
+
+### Fixed
+- Autosave failures remain visible with an Export CSV action until a write succeeds. Save status is separate from temporary messages, pending saves are attempted when leaving the page, and error pages no longer promise recovery of unsaved edits.
+- Cancelled fill gestures and window focus loss discard the fill preview instead of applying it; other pointers cannot finish an active gesture.
+- The theme selector supports arrow keys and a single tab stop. Function search has an explicit accessible label.
+- Light warning text meets minimum contrast on diagnostic backgrounds; the function panel fits narrow screens and secondary editing controls have larger touch targets.
+
+### Added
+- A column-width field in the Sheet menu provides keyboard and non-drag resizing. CSV actions and Clear use the same Sheet menu on desktop and mobile.
+
 ## [0.2.2] - 2026-10-15
 
 ### Fixed

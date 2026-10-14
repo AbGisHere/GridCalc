@@ -8,6 +8,7 @@ import { fillTarget } from '@/state/fill';
 import { selectionRange, type Selection } from '@/state/selection';
 import type { RefMark } from './formulaTokens';
 import { ColumnLayout, HEADER_HEIGHT, MIN_COL_WIDTH, ROW_HEADER_WIDTH, ROW_HEIGHT } from './geometry';
+import { trackPointer } from './pointer';
 
 export type DragMode = 'select' | 'ref' | 'none';
 
@@ -141,7 +142,7 @@ export function Grid(props: GridProps) {
 
   /** Shared drag loop for mouse, pen and touch: tracks the pointer, auto-scrolls near edges, reports cell positions. */
   const startDrag = useCallback(
-    (start: React.PointerEvent | React.MouseEvent, onMove: (pos: CellPos) => void, onEnd?: () => void) => {
+    (start: React.PointerEvent | React.MouseEvent, onMove: (pos: CellPos) => void, onEnd?: (committed: boolean) => void) => {
       let lastX = start.clientX;
       let lastY = start.clientY;
       let raf = 0;
@@ -168,9 +169,9 @@ export function Grid(props: GridProps) {
         lastY = e.clientY;
         onMove(posFromClient(e.clientX, e.clientY));
       };
-      trackPointer(start, move, () => {
+      trackPointer(start, move, (committed) => {
         cancelAnimationFrame(raf);
-        onEnd?.();
+        onEnd?.(committed);
       });
       raf = requestAnimationFrame(tick);
     },
@@ -200,9 +201,9 @@ export function Grid(props: GridProps) {
         target = fillTarget(source, p);
         setFillPreview(target);
       },
-      () => {
+      (committed) => {
         setFillPreview(null);
-        if (target) live.current.onFill(source, target);
+        if (committed && target) live.current.onFill(source, target);
       },
     );
   };
@@ -413,28 +414,3 @@ export function Grid(props: GridProps) {
 
 /** Keeps a mouse press on a handle from also starting a selection in the cells or headers underneath. */
 const stopMouse = (e: React.MouseEvent) => e.stopPropagation();
-
-/**
- * Follows the pointer that started a drag until it is released or cancelled, or the window loses focus (Alt+Tab
- * mid-drag). Other pointers, such as a second finger, neither move nor end the drag.
- */
-function trackPointer(start: React.PointerEvent | React.MouseEvent, onMove: (e: PointerEvent) => void, onEnd?: () => void) {
-  const mine = (e: PointerEvent) => ('pointerId' in start ? e.pointerId === start.pointerId : e.pointerType === 'mouse');
-  const move = (e: PointerEvent) => {
-    if (mine(e)) onMove(e);
-  };
-  const release = (e: PointerEvent) => {
-    if (mine(e)) end();
-  };
-  const end = () => {
-    window.removeEventListener('pointermove', move);
-    window.removeEventListener('pointerup', release);
-    window.removeEventListener('pointercancel', release);
-    window.removeEventListener('blur', end);
-    onEnd?.();
-  };
-  window.addEventListener('pointermove', move);
-  window.addEventListener('pointerup', release);
-  window.addEventListener('pointercancel', release);
-  window.addEventListener('blur', end);
-}

@@ -30,7 +30,7 @@ export function FunctionsPanel({ onInsert, onClose }: FunctionsPanelProps) {
           <Icon name="close" />
         </button>
       </header>
-      <input className="fn-search" placeholder="Search functions…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+      <input className="fn-search" aria-label="Search functions" placeholder="Search functions…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
       <div className="fn-list">
         {groups.map((g) => (
           <section key={g.cat}>

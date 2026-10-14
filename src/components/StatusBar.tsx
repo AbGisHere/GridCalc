@@ -13,6 +13,8 @@ export interface SelectionStats {
 }
 
 interface StatusBarProps {
+  saveState: 'saving' | 'saved' | 'failed';
+  onExport(): void;
   stats: SelectionStats | null;
   recalc: RecalcStats | null;
   rendered: number;
@@ -31,12 +33,18 @@ interface StatusBarProps {
 const fmt = (n: number) => n.toLocaleString('en-US');
 const compact = new Intl.NumberFormat('en-US', { notation: 'compact' });
 
-export function StatusBar({ stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message, onUndo, onHold }: StatusBarProps) {
+export function StatusBar({ saveState, onExport, stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message, onUndo, onHold }: StatusBarProps) {
   return (
     <footer className="status-bar">
       <p className="sr-only" role="status">
         {message}
       </p>
+      <div className={`save-state${saveState === 'failed' ? ' failed' : ''}`}>
+        <span role="status" title={saveState === 'failed' ? 'Browser storage is full or blocked. Export a CSV to keep this sheet.' : undefined}>
+          {saveState === 'failed' ? 'Not saved' : saveState === 'saving' ? 'Saving…' : 'Saved'}
+        </span>
+        {saveState === 'failed' && <button className="status-undo" onClick={onExport}>Export CSV</button>}
+      </div>
       {errors > 0 && (
         <button className="err-nav" onClick={onNextError} title="Select the next error cell (F8, or Shift+F8 for the previous one)">
           <b>{fmt(errors)}</b> error{errors === 1 ? '' : 's'}

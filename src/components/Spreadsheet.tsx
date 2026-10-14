@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
 import {
   cellKey,
+  colToLetters,
   inBounds,
   keyCol,
   keyRow,
@@ -35,6 +36,7 @@ import { FunctionsPanel } from './FunctionsPanel';
 import { Icon } from './Icon';
 import { ThemePicker } from './ThemePicker';
 import { ToolMenu } from './ToolMenu';
+import { ColumnWidthControl } from './ColumnWidthControl';
 import { defaultColumnWidths, fittedColumnWidths, ROW_HEIGHT } from './geometry';
 import { Grid, type DragMode, type GridHandle } from './Grid';
 import { StatusBar, type SelectionStats } from './StatusBar';
@@ -138,6 +140,8 @@ export default function Spreadsheet() {
   const [heldToast, setHeldToast] = useState<Toast>();
   const say = (text: string) => setToast({ text });
   const [loaded, setLoaded] = useState(false);
+  const [savedVersion, setSavedVersion] = useState<number | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
 
   const gridRef = useRef<GridHandle>(null);
   const cellInputRef = useRef<HTMLInputElement>(null);
@@ -148,7 +152,6 @@ export default function Spreadsheet() {
   const workspaceRef = useRef<HTMLElement>(null);
   /** Set by Escape on the grid: the next Tab leaves the sheet instead of moving to the next cell. */
   const tabOut = useRef(false);
-  const saveWarned = useRef(false);
   const assistId = useId();
   const refInsert = useRef<{ start: number; end: number; anchor: CellPos } | null>(null);
   const lastDrag = useRef('');
@@ -180,16 +183,22 @@ export default function Spreadsheet() {
 
   useEffect(() => {
     if (!loaded) return;
-    const t = setTimeout(() => {
+    const save = () => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(engine.toJSON()));
+        setSavedVersion(engine.version);
+        setSaveFailed(false);
       } catch {
-        // Storage full or unavailable: the sheet still works, it just won't survive a reload. Say so once.
-        if (!saveWarned.current) say("Autosave failed: browser storage is full or blocked. Export a CSV to keep this sheet.");
-        saveWarned.current = true;
+        setSaveFailed(true);
       }
-    }, 500);
-    return () => clearTimeout(t);
+    };
+    const t = setTimeout(save, 500);
+    // Flush the debounce when leaving the page; a failed write remains visible while the page is open.
+    window.addEventListener('pagehide', save);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('pagehide', save);
+    };
   }, [engine, version, loaded]);
 
   useEffect(() => {
@@ -818,9 +827,9 @@ export default function Spreadsheet() {
     </>
   );
 
-  const sheetActions: { label: string; detail: string; icon?: 'import' | 'export'; run(): void; disabled?: boolean }[] = [
-    { label: 'Import CSV', detail: 'Replace the sheet with a .csv file', icon: 'import', run: () => fileRef.current?.click() },
-    { label: 'Export CSV', detail: 'Download the sheet as a .csv file', icon: 'export', run: exportCSV },
+  const sheetActions: { label: string; detail: string; run(): void; disabled?: boolean }[] = [
+    { label: 'Import CSV', detail: 'Replace the sheet with a .csv file', run: () => fileRef.current?.click() },
+    { label: 'Export CSV', detail: 'Download the sheet as a .csv file', run: exportCSV },
     { label: 'Clear', detail: 'Empty the sheet; Undo brings it back', run: () => replaceSheet({}, 'Clear sheet'), disabled: !engine.cellCount },
   ];
 
@@ -879,15 +888,9 @@ export default function Spreadsheet() {
         </div>
 
         <div className="tool-group">
-          {sheetActions.slice(0, 2).map((a) => (
-            <button key={a.label} className="tool wide-only" onClick={a.run} title={a.detail}>
-              <Icon name={a.icon!} />
-              <span className="tool-label">{a.label}</span>
-            </button>
-          ))}
-          {/* On a phone the CSV buttons, Clear and the theme share one menu, so the toolbar fits on one row with 44px targets. */}
+          {/* Sheet actions share one menu, including a non-drag alternative to resizing columns. */}
           <ToolMenu
-            className="narrow-only end"
+            className="end"
             title="Sheet actions"
             label={
               <>
@@ -912,7 +915,13 @@ export default function Spreadsheet() {
                     <span>{a.detail}</span>
                   </button>
                 ))}
-                <ThemePicker />
+                <ColumnWidthControl
+                  key={active.col}
+                  column={colToLetters(active.col)}
+                  width={colWidths[active.col]}
+                  onResize={(width) => setColWidths((ws) => ws.map((w, c) => c === active.col ? width : w))}
+                />
+                <div className="narrow-only"><ThemePicker /></div>
               </>
             )}
           </ToolMenu>
@@ -930,9 +939,6 @@ export default function Spreadsheet() {
         </div>
 
         <div className="tool-group right wide-only">
-          <button className="tool" onClick={sheetActions[2].run} disabled={sheetActions[2].disabled}>
-            Clear
-          </button>
           <ToolMenu
             className="end"
             title="Theme"
@@ -1039,6 +1045,8 @@ export default function Spreadsheet() {
       </main>
 
       <StatusBar
+        saveState={saveFailed ? 'failed' : !loaded || savedVersion !== version ? 'saving' : 'saved'}
+        onExport={exportCSV}
         stats={selStats}
         recalc={engine.lastStats}
         rendered={rendered}

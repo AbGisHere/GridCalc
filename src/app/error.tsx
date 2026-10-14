@@ -9,7 +9,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       code="#ERROR!"
       formula={`=APP()\n ^\n${error.digest ? `Error ID: ${error.digest}` : 'Something failed while rendering this page.'}`}
       title="Something went wrong"
-      message="GridCalc hit an unexpected error. Your sheet is saved in this browser, so trying again or reloading won't lose it."
+      message="GridCalc hit an unexpected error. Try again to recover the sheet. Reloading restores the last successful autosave; recent edits may not have been saved."
     >
       <button className="primary" onClick={reset}>
         Try again

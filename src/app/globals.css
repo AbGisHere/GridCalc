@@ -34,7 +34,7 @@
   --sel-fill: rgba(11, 122, 83, 0.08);
   --error: #c4321f;
   --error-soft: #fdf0ee;
-  --warn: #a86400;
+  --warn: #995b00;
   --warn-soft: #fff7e8;
   --num: #1d4ed8;
   --string: #0f766e;
@@ -423,6 +423,38 @@ button {
 .menu-item span {
   color: var(--muted);
   font-size: var(--text-sm);
+}
+
+.column-width {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0;
+  padding: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.column-width > div {
+  display: flex;
+  gap: 8px;
+}
+
+.column-width input {
+  min-width: 0;
+  width: 100%;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+}
+
+.column-width button {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
 }
 
 .shortcuts .menu-pop {
@@ -1160,7 +1192,8 @@ button {
 
 /* ------------------------------------------------------------------ functions panel */
 .fn-panel {
-  width: 340px;
+  width: min(340px, 100%);
+  flex-shrink: 0;
   border-left: 1px solid var(--border);
   background: var(--surface);
   display: flex;
@@ -1283,6 +1316,18 @@ button {
 .status-right {
   display: flex;
   overflow: hidden;
+}
+
+.save-state {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-state.failed {
+  color: var(--error);
+  font-weight: 600;
 }
 
 .status-left {
@@ -1506,6 +1551,19 @@ button {
   .cell-editor,
   .fn-search {
     font-size: 16px;
+  }
+  .column-width input {
+    font-size: 16px;
+  }
+  .column-width input,
+  .column-width button,
+  .assist-list li,
+  .diag-origin button,
+  .diag-fix button {
+    min-height: 44px;
+  }
+  .diag-origin button {
+    min-width: 44px;
   }
   /* Keyboard hints mean nothing without a keyboard; a tap inserts the suggestion. */
   .assist-help {

@@ -13,7 +13,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           code="#ERROR!"
           formula={`=APP()\n ^\n${error.digest ? `Error ID: ${error.digest}` : 'GridCalc failed to start.'}`}
           title="GridCalc couldn't load"
-          message="Your sheet is saved in this browser. Try again, or reload the page."
+          message="Try again, or reload to restore the last successful autosave. Recent edits may not have been saved, and recovery requires browser storage to be available."
         >
           <button className="primary" onClick={reset}>
             Try again
