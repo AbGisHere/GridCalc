@@ -667,16 +667,20 @@ export default function Spreadsheet() {
   };
 
   const insertFunction = (def: FnDef) => {
+    const narrow = window.matchMedia('(max-width: 760px)').matches;
+    const target = narrow ? 'bar' : edit?.target ?? 'cell';
+    if (narrow) setShowFns(false);
     if (edit && edit.value.startsWith('=')) {
       const c = activeInput()?.selectionStart ?? edit.value.length;
       const value = edit.value.slice(0, c) + `${def.name}(` + edit.value.slice(c);
       const pos = c + def.name.length + 1;
-      setEdit({ ...edit, value });
+      setEdit({ ...edit, value, target });
       setCaret(pos);
-      focusInputAt(pos);
+      focusInputAt(pos, target);
     } else {
       const value = `=${def.name}(`;
-      startEdit(active, value, 'edit');
+      startEdit(active, value, 'edit', target);
+      focusInputAt(value.length, target);
     }
   };
 

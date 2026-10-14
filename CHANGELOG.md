@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Changed
 - CSV export is labeled as exporting calculated values and explicitly says that formulas are not included, including the recovery action when browser saving fails.
+- Choosing a function on a narrow screen closes the reference overlay and moves editing to the visible formula bar. The reference remains docked on desktop.
 
 ## [0.2.6] - 2026-10-15
 
