@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-10-15
+
+### Changed
+- README and product context distinguish the dependency-free formula engine from the app's React, Next.js and Vercel Web Analytics dependencies.
+
 ## [0.3.2] - 2026-10-15
 
 ### Performance

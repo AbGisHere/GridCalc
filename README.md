@@ -78,7 +78,8 @@ Suggestion: Add ')' at the end of the formula.
 | --- | --- |
 | Language | TypeScript (strict) |
 | Framework | Next.js (App Router), React |
-| Formula engine | Hand-written lexer, Pratt parser and evaluator. No runtime dependencies besides React and Next.js |
+| Formula engine | Hand-written lexer, Pratt parser and evaluator with no external runtime dependencies |
+| Analytics | Vercel Web Analytics for production page visits; sheet data stays local |
 | Testing | Vitest |
 | Code quality | knip (unused code), `tsc --noEmit` |
 | CI / security | GitHub Actions, `npm audit`, Dependabot, strict security headers (CSP, HSTS, frame-ancestors) |

@@ -24,7 +24,7 @@ Core requirements it must visibly satisfy:
 ## Positioning
 
 - **Self-explaining errors.** Every error shows the formula with a caret under the problem, a plain-language explanation, a suggestion and, where possible, a one-click fix that is re-parsed before it is offered. Errors that flow in from other cells name and link to their source.
-- **Built from scratch.** Hand-written lexer, Pratt parser, tree-walking evaluator and dependency graph (iterative Tarjan SCC). No spreadsheet or formula libraries; the only runtime dependencies are React and Next.js.
+- **Built from scratch.** Hand-written lexer, Pratt parser, tree-walking evaluator and dependency graph (iterative Tarjan SCC). The formula engine has no external runtime dependencies. The app uses React, Next.js and Vercel Web Analytics; no spreadsheet or formula library.
 - **Visible engine.** The status bar shows how many cells an edit recalculated and how long it took, and how many cells are in the DOM out of 10,000,000 (the "DOM cells" counter), and the recalculated cells light up in dependency order after each edit, so a reviewer can watch virtualization and incremental recalculation working.
 - **Local sheet data.** Sheet contents stay in `localStorage`. Vercel Web Analytics measures page visits without receiving cell contents or formulas.
 
