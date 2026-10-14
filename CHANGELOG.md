@@ -5,6 +5,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.23] - 2026-10-14
+
+### Added
+- **Recalculation wave**: after an edit, every cell the engine recalculated lights up briefly, one dependency level after another, so you can watch incremental recalculation reach exactly the cells that depend on the edit. Loading a sheet and F9 don't play it.
+
+### Changed
+- The outline around a copied or cut range is now marching ants that run around its edge, as in Excel, instead of blinking.
+- With the system's reduce-motion setting on, the copy outline stays still and the recalculation wave becomes one gentle fade on all the recalculated cells at once.
+
 ## [0.1.22] - 2026-10-14
 
 ### Fixed

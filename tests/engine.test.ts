@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { keyToA1 } from '../src/engine/address';
 import { normalizeFormula, shiftFormula } from '../src/engine/references';
 import { sheet } from './helpers';
 
@@ -31,6 +32,15 @@ describe('dependency tracking', () => {
     const stats = s.set('A1', 3);
     expect(stats.evaluated).toBe(3);
     expect(s.get('D1')).toBe(10);
+  });
+
+  it('records how deep in the chain each recalculated cell sits, for the recalculation wave', () => {
+    const s = sheet({ A1: 1, B1: '=A1+1', C1: '=A1*2', D1: '=B1+C1', E1: '=A1+D1' });
+    s.set('A1', 3);
+    const depths = Object.fromEntries([...s.engine.lastWave].map(([k, d]) => [keyToA1(k), d]));
+    expect(depths).toEqual({ B1: 1, C1: 1, D1: 2, E1: 3 });
+    s.engine.recalculateAll();
+    expect(s.engine.lastWave.size).toBe(0);
   });
 
   it('drops old dependencies when a formula changes', () => {

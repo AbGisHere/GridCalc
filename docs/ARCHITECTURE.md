@@ -89,6 +89,8 @@ Editing a formula first unlinks its old edges, so the graph always matches the c
 
 Tarjan's algorithm is implemented **iteratively**, so a 20,000-cell dependency chain (tested) cannot overflow the JavaScript call stack.
 
+While walking the components, the engine also records each recalculated cell's depth in the chain (1 for a cell that reads an edited cell directly, 2 for the next level, and so on). The grid plays this back as the recalculation wave, delaying each visible cell's highlight by its depth.
+
 The status bar reports how many cells each edit re-evaluated. In the 10k-row stress test, editing `B2` recalculates about 10,008 cells (its total, the 10,000-long running-total chain, and the summaries), while editing `B10001` recalculates about 9.
 
 ## 5. Grid virtualization: `src/components/Grid.tsx`

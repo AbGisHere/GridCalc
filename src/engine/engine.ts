@@ -62,6 +62,11 @@ export class SpreadsheetEngine {
   /** Bumped on every change; handy as a React external-store snapshot. */
   version = 0;
   lastStats: RecalcStats | null = null;
+  /**
+   * The cells the last edit recalculated downstream of it, each with its depth in the dependency chain
+   * (1 = reads an edited cell directly). The grid plays it back as a wave; loads and F9 leave it empty.
+   */
+  lastWave: ReadonlyMap<number, number> = new Map();
 
   // ---------------------------------------------------------------- reading
 
@@ -142,8 +147,9 @@ export class SpreadsheetEngine {
       this.write(key, e.raw);
       changed.push(key);
     }
-    const { evaluated, cycles } = this.recalculate(changed);
+    const { evaluated, cycles, wave } = this.recalculate(changed);
     const stats: RecalcStats = { edited: changed.length, evaluated, cycles, ms: now() - t0 };
+    this.lastWave = wave;
     this.lastStats = stats;
     this.version++;
     this.listeners.forEach((l) => l());
@@ -155,6 +161,7 @@ export class SpreadsheetEngine {
     const t0 = now();
     const { evaluated, cycles } = this.recalculate([...this.cells.keys()]);
     const stats: RecalcStats = { edited: 0, evaluated, cycles, ms: now() - t0 };
+    this.lastWave = new Map();
     this.lastStats = stats;
     this.version++;
     this.listeners.forEach((l) => l());
@@ -178,7 +185,9 @@ export class SpreadsheetEngine {
       const ref = parseA1(a1);
       if (ref && typeof raw === 'string') edits.push({ row: ref.row, col: ref.col, raw });
     }
-    return this.setCells(edits);
+    const stats = this.setCells(edits);
+    this.lastWave = new Map();
+    return stats;
   }
 
   subscribe = (listener: () => void): (() => void) => {
@@ -245,7 +254,7 @@ export class SpreadsheetEngine {
     this.rangeIndex.forEachOwnerContaining(keyRow(key), keyCol(key), fn);
   }
 
-  private recalculate(changed: readonly number[]): { evaluated: number; cycles: number } {
+  private recalculate(changed: readonly number[]): { evaluated: number; cycles: number; wave: Map<number, number> } {
     // 1. Collect the affected subgraph: changed cells, volatile cells, and everything downstream.
     const affected = new Set<number>(changed);
     for (const v of this.volatileCells) affected.add(v);
@@ -267,6 +276,10 @@ export class SpreadsheetEngine {
     // 2. Order it. Tarjan yields SCCs dependents-first, so walk the list backwards.
     const succ = (k: number) => successors.get(k) ?? [];
     const components = stronglyConnectedComponents(affected, succ);
+    // Depth is propagated in the same order, so every cell's depth is final before its dependents read it.
+    const edited = new Set(changed);
+    const depth = new Map<number, number>();
+    const wave = new Map<number, number>();
     let evaluated = 0;
     let cycles = 0;
     for (let i = components.length - 1; i >= 0; i--) {
@@ -278,8 +291,16 @@ export class SpreadsheetEngine {
       } else if (this.evaluate(comp[0])) {
         evaluated++;
       }
+      const members = comp.length > 1 ? new Set(comp) : null;
+      for (const k of comp) {
+        const d = depth.get(k) ?? 0;
+        if (!edited.has(k)) wave.set(k, Math.max(d, 1));
+        for (const s of succ(k)) {
+          if (s !== k && !members?.has(s)) depth.set(s, Math.max(depth.get(s) ?? 0, d + 1));
+        }
+      }
     }
-    return { evaluated, cycles };
+    return { evaluated, cycles, wave };
   }
 
   private evaluate(key: number): boolean {

@@ -7,6 +7,7 @@
 - Circular references are detected and reported as #CIRC! with the cycle path.
 - Light, dark and semi themes; semi keeps the interface dark around a white sheet.
 - The status bar counts error cells and jumps between them (F8 / Shift+F8).
+- After an edit, the recalculated cells light up in dependency order (a recalculation wave).
 
 ## Docs
 

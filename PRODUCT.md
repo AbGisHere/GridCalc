@@ -25,7 +25,7 @@ Core requirements it must visibly satisfy:
 
 - **Self-explaining errors.** Every error shows the formula with a caret under the problem, a plain-language explanation, a suggestion and, where possible, a one-click fix that is re-parsed before it is offered. Errors that flow in from other cells name and link to their source.
 - **Built from scratch.** Hand-written lexer, Pratt parser, tree-walking evaluator and dependency graph (iterative Tarjan SCC). No spreadsheet or formula libraries; the only runtime dependencies are React and Next.js.
-- **Visible engine.** The status bar shows how many cells an edit recalculated and how long it took, and how many cells are in the DOM out of 10,000,000 (the "DOM cells" counter), so a reviewer can watch virtualization and incremental recalculation working.
+- **Visible engine.** The status bar shows how many cells an edit recalculated and how long it took, and how many cells are in the DOM out of 10,000,000 (the "DOM cells" counter), and the recalculated cells light up in dependency order after each edit, so a reviewer can watch virtualization and incremental recalculation working.
 - **Private, no backend.** Data stays in `localStorage`; the app makes no network requests.
 
 ## Operating Context
@@ -55,7 +55,7 @@ Core requirements it must visibly satisfy:
 
 - The live app, its sample sheet and stress test.
 - `README.md`, `docs/ARCHITECTURE.md`, `docs/FUNCTIONS.md`, `CHANGELOG.md`, `ROADMAP.md`.
-- 149 unit tests and green CI on every push.
+- 153 unit tests and green CI on every push.
 - No users, testimonials, benchmarks against other products, or press exist. Do not invent any.
 
 ## Product Principles

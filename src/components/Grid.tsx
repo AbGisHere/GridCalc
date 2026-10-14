@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
-import { colToLetters, type CellPos, type RangeBounds } from '@/engine/address';
+import { Fragment, useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type Ref } from 'react';
+import { cellKey, colToLetters, type CellPos, type RangeBounds } from '@/engine/address';
 import type { SpreadsheetEngine } from '@/engine/engine';
 import { CellError, displayValue } from '@/engine/values';
 import { fillTarget } from '@/state/fill';
@@ -41,6 +41,8 @@ interface GridProps {
 const OVERSCAN_ROWS = 6;
 const OVERSCAN_COLS = 2;
 const EDGE = 28;
+/** Longest the recalculation wave can take: the deepest delay plus the fade (see .recalc in globals.css). */
+const WAVE_MS = 1300;
 
 interface Viewport {
   top: number;
@@ -62,6 +64,17 @@ export function Grid(props: GridProps) {
   // Latest props for window-level listeners attached during drags.
   const live = useRef(props);
   live.current = props;
+
+  // The cells the last edit recalculated, kept until the wave has played out so cells scrolled into view later
+  // don't light up. Keyed by version, so an edit mid-wave restarts it.
+  const [wave, setWave] = useState<{ id: number; depths: ReadonlyMap<number, number> } | null>(null);
+  useEffect(() => {
+    const depths = engine.lastWave;
+    setWave(depths.size ? { id: props.version, depths } : null);
+    if (!depths.size) return;
+    const t = setTimeout(() => setWave(null), WAVE_MS);
+    return () => clearTimeout(t);
+  }, [engine, props.version]);
 
   // ----------------------------------------------------------- viewport tracking
   const frame = useRef(0);
@@ -243,10 +256,21 @@ export function Grid(props: GridProps) {
   const fullRows = sel.c1 === 0 && sel.c2 === layout.count - 1;
 
   const cells: ReactNode[] = [];
+  const recalced: ReactNode[] = [];
   for (let r = r0; r <= r1; r++) {
     for (let c = c0; c <= c1; c++) {
       const rec = engine.getRecord(r, c);
       if (!rec) continue;
+      const depth = wave?.depths.get(cellKey(r, c));
+      if (depth) {
+        recalced.push(
+          <div
+            key={`${r}:${c}`}
+            className="recalc"
+            style={{ left: layout.x(c), top: r * ROW_HEIGHT, width: layout.width(c), height: ROW_HEIGHT, '--depth': Math.min(depth, 8) } as CSSProperties}
+          />,
+        );
+      }
       const v = rec.value;
       const isErr = v instanceof CellError;
       const cls =
@@ -346,6 +370,7 @@ export function Grid(props: GridProps) {
           onDoubleClick={(e) => props.onDoubleClick(posFromClient(e.clientX, e.clientY))}
         >
           {vlines}
+          <Fragment key={wave?.id}>{recalced}</Fragment>
           {cells}
           {refMarks.map((m, i) => (
             <div key={i} className="ref-mark" style={{ ...rect(m.range), color: m.color }} />
