@@ -5,6 +5,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.20] - 2026-10-14
+
+### Added
+- Three themes: **Light**, **Dark** and **Semi**. Semi keeps the toolbar, formula bar and panels dark and the sheet itself white, the way it would print. Pick one in the new **Theme** menu next to Shortcuts, or at the bottom of the **Sheet** menu on a phone; each choice shows a small picture of the theme.
+- Until you pick a theme, the app follows the system's light or dark setting, as before. The choice is saved in the browser under `gridcalc:theme`, and any other stored value is ignored.
+
+### Changed
+- The colour tokens are keyed on a `data-theme` attribute instead of the `prefers-color-scheme` media query. `public/theme.js`, a same-origin script in the page head, sets it before the first paint, so a saved theme never flashes the wrong one. The CSP is unchanged.
+- The sheet sets its own text colour instead of inheriting it, which Semi needs for dark text on the white sheet.
+- Buttons no longer show the browser's blue flash when tapped on a phone.
+
 ## [0.1.19] - 2026-10-14
 
 ### Changed

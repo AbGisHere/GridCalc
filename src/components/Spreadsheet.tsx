@@ -33,6 +33,7 @@ import { FormulaBar } from './FormulaBar';
 import { assistAt, canInsertRef, formulaRefs } from './formulaTokens';
 import { FunctionsPanel } from './FunctionsPanel';
 import { Icon } from './Icon';
+import { ThemePicker } from './ThemePicker';
 import { ToolMenu } from './ToolMenu';
 import { defaultColumnWidths, fittedColumnWidths, ROW_HEIGHT } from './geometry';
 import { Grid, type DragMode, type GridHandle } from './Grid';
@@ -877,7 +878,7 @@ export default function Spreadsheet() {
               <span className="tool-label">{a.label}</span>
             </button>
           ))}
-          {/* On a phone the CSV buttons and Clear share one menu, so the toolbar fits on one row with 44px targets. */}
+          {/* On a phone the CSV buttons, Clear and the theme share one menu, so the toolbar fits on one row with 44px targets. */}
           <ToolMenu
             className="narrow-only end"
             title="Sheet actions"
@@ -888,22 +889,25 @@ export default function Spreadsheet() {
               </>
             }
           >
-            {(close) =>
-              sheetActions.map((a) => (
-                <button
-                  key={a.label}
-                  className="menu-item"
-                  disabled={a.disabled}
-                  onClick={() => {
-                    close();
-                    a.run();
-                  }}
-                >
-                  <b>{a.label}</b>
-                  <span>{a.detail}</span>
-                </button>
-              ))
-            }
+            {(close) => (
+              <>
+                {sheetActions.map((a) => (
+                  <button
+                    key={a.label}
+                    className="menu-item"
+                    disabled={a.disabled}
+                    onClick={() => {
+                      close();
+                      a.run();
+                    }}
+                  >
+                    <b>{a.label}</b>
+                    <span>{a.detail}</span>
+                  </button>
+                ))}
+                <ThemePicker />
+              </>
+            )}
           </ToolMenu>
           <input
             ref={fileRef}
@@ -922,6 +926,18 @@ export default function Spreadsheet() {
           <button className="tool" onClick={sheetActions[2].run} disabled={sheetActions[2].disabled}>
             Clear
           </button>
+          <ToolMenu
+            className="end"
+            title="Theme"
+            label={
+              <>
+                Theme
+                <Icon name="chevron" />
+              </>
+            }
+          >
+            {() => <ThemePicker />}
+          </ToolMenu>
           <ToolMenu className="end shortcuts" title="Keyboard shortcuts" label="Shortcuts">
             {() => (
               <table>

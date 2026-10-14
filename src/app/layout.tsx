@@ -23,7 +23,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // public/theme.js sets data-theme on <html> before React hydrates.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script src="/theme.js" />
+      </head>
       <body>{children}</body>
     </html>
   );

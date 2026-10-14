@@ -5,6 +5,7 @@
 - Data stays in the browser (localStorage); the app makes no network requests.
 - 96 built-in functions, including SUM, IF, VLOOKUP, XLOOKUP, INDEX/MATCH, SUMIFS and TEXTJOIN.
 - Circular references are detected and reported as #CIRC! with the cycle path.
+- Light, dark and semi themes; semi keeps the interface dark around a white sheet.
 - The status bar counts error cells and jumps between them (F8 / Shift+F8).
 
 ## Docs
