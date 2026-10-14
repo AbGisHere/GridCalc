@@ -98,7 +98,16 @@ npm run dev          # http://localhost:3000
 | `npm run check:h1` | Check that every built page has exactly one `<h1>` (run after `build`) |
 | `npm run docs:functions` | Regenerate `docs/FUNCTIONS.md` from the function registry |
 
-On first load the app opens a **sample sheet** with working formulas and one example of each error type. The errors with a one-click fix come first: click a red cell, or press **Next** in the status bar, to see its diagnosis. Use **Demos → 10k-row stress test** in the toolbar to load 60,000 cells and 30,000 formulas.
+## Demos
+
+First-time visitors start with a **blank sheet**. Later visits restore the sheet saved in this browser. Open **Demos** in the toolbar to load an example:
+
+| Demo | What to try |
+| --- | --- |
+| **Sample sheet** | Working formulas and intentional errors. Choose **Try a formula fix**, click a red cell or press **Next** in the status bar to see an explanation and suggested repair. |
+| **10k-row stress test** | 60,000 cells and 30,000 formulas. Use the guide's jump buttons to edit **B2**, then **B10001**, and compare the **Recalc** counter for a long dependency chain versus its end. |
+
+Loading a demo replaces the current sheet; **Undo** restores it. The demo guide can be dismissed. To return to a blank sheet, choose **Sheet → Clear**.
 
 ## Deployment
 
