@@ -31,7 +31,7 @@ Core requirements it must visibly satisfy:
 ## Operating Context
 
 - Live at https://gridcalc.abgupta.me (Vercel); source at https://github.com/AbGisHere/GridCalc.
-- First load opens a sample sheet with working formulas and one example of each error type; the red cells are the entry point to the diagnostics panel.
+- First load opens a blank sheet; later visits restore the sheet saved in this browser. Demos → Sample sheet loads working formulas and intentional error examples, with a dismissible guide that jumps directly to a fixable error.
 - A "10k-row stress test" entry in the toolbar's Demos menu loads 60,000 cells and 30,000 formulas to demonstrate scale.
 - Reviewers may read the README, `docs/ARCHITECTURE.md` and `docs/FUNCTIONS.md` alongside the app.
 

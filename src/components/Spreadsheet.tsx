@@ -175,8 +175,7 @@ export default function Spreadsheet() {
     } catch {
       data = null;
     }
-    engine.load(data ?? SAMPLE_SHEET);
-    if (!data) setDemoGuide('sample');
+    engine.load(data ?? {});
     if (!widths) setColWidths(contentWidths(engine));
     setLoaded(true);
     gridRef.current?.focus();

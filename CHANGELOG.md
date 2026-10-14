@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.13] - 2026-10-15
+
+### Changed
+- First-time visitors start with a blank sheet. Saved sheets still reopen; the sample and stress test remain available through Demos, with their guides and examples documented in the README.
+
 ## [0.2.12] - 2026-10-15
 
 ### Changed
