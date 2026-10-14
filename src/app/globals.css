@@ -70,6 +70,20 @@ button {
   color: inherit;
 }
 
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .boot {
   display: grid;
   place-content: center;
@@ -239,6 +253,7 @@ button {
   box-shadow: var(--shadow);
   padding: 8px 12px;
   width: 400px;
+  max-width: calc(100vw - 24px);
 }
 
 .help-pop th {
@@ -419,13 +434,11 @@ button {
   max-width: 340px;
 }
 
-.assist-list li.assist-help {
-  cursor: default;
+.assist-help {
   font-size: 11px;
   color: var(--muted);
   border-top: 1px solid var(--border);
-  border-radius: 0;
-  margin-top: 2px;
+  padding: 6px 12px;
 }
 
 .assist-signature {
@@ -651,6 +664,13 @@ button {
   border: 1.5px solid var(--bg);
   cursor: crosshair;
   z-index: 3;
+}
+
+/* The handle stays 8px to the eye but takes a 24px target for the pointer. */
+.fill-handle::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
 }
 
 .fill-preview {
@@ -987,6 +1007,9 @@ button {
 .status-message {
   color: var(--accent-strong);
   font-weight: 550;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-bar .warn {

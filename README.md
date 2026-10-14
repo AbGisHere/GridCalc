@@ -29,6 +29,7 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 - Copy, cut and paste. Pasting inside the sheet re-targets formula references, and tab-separated data pastes in from Excel or Google Sheets.
 - Resizable columns, CSV import/export, and automatic saving to `localStorage`.
 - Custom 404 and error pages styled like the app's own error diagnostics.
+- **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar and sheet, the active cell and its value are announced, autocomplete is a proper combobox, and every control shows a visible focus ring.
 
 **Formula engine**
 - **96 functions** including `SUM`, `IF`, `VLOOKUP`, `XLOOKUP`, `INDEX`/`MATCH`, `SUMIFS`, `COUNTIFS`, `TEXTJOIN` and `TEXT`. See [docs/FUNCTIONS.md](docs/FUNCTIONS.md) for the full list.
@@ -144,10 +145,12 @@ public/                llms.txt
 | Ctrl/⌘ + C / X / V | Copy, cut, paste |
 | Ctrl/⌘ + D / R | Fill down / right |
 | F9 | Recalculate everything (re-rolls `RAND`) |
+| Esc, then Tab | Leave the sheet |
+| F6 / Shift + F6 | Move between toolbar, formula bar and sheet |
 
 ## Roadmap
 
-Planned features, starting with sharing a sheet by link, are in [ROADMAP.md](ROADMAP.md).
+Planned features, starting with sharing a sheet by link, are in [ROADMAP.md](ROADMAP.md). [PRODUCT.md](PRODUCT.md) records who the app is for, what it must prove and the principles behind design decisions.
 
 ## Changelog
 

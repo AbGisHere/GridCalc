@@ -5,6 +5,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-10-14
+
+### Added
+- `PRODUCT.md`: who the app is for, what it must prove and the principles behind design decisions.
+- Esc, then Tab, leaves the sheet, and F6 / Shift+F6 move focus between the toolbar, the formula bar and the sheet. Both are listed under Shortcuts.
+- Screen readers hear the active cell, its value and its formula, or the selected range, as the selection moves. The sheet describes how to use and leave it.
+- A visible focus ring on every button and control.
+
+### Changed
+- Tab no longer traps keyboard users inside the sheet: inside it Tab still moves one cell, as in other spreadsheets, but Esc then Tab now lets focus out.
+- The sheet uses `role="application"` with a "spreadsheet" description instead of a `role="grid"` that had no rows or cells.
+- Function autocomplete is a proper combobox: screen readers follow the highlighted suggestion.
+- The Shortcuts popover closes on Esc (focus goes back to its button) or a click outside, instead of when the mouse leaves it, and fits on phone screens. The function list closes on Esc and returns focus to the sheet.
+- The fill handle keeps its look but now has a 24 px pointer target.
+
+### Fixed
+- Autocomplete no longer runs off the right edge of the window when editing a cell near the last visible column.
+- A drag (selection, fill or column resize) now ends if the window loses focus mid-drag, instead of following the pointer after you come back.
+- CSV import refuses files over 20 MB instead of freezing the tab, reports files it can't read, and says when cells outside A1:CV100000 were left out.
+- If autosave fails because storage is full or blocked, a message says so once instead of failing silently.
+- Long status messages, such as an imported file's name, are cut off with an ellipsis instead of overflowing.
+
 ## [0.1.8] - 2026-10-14
 
 ### Changed

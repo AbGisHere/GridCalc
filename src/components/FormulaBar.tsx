@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type Ref } from 'react';
+import type { ComboboxAttrs } from './FormulaAssist';
 import { highlightSegments } from './formulaTokens';
 
 interface FormulaBarProps {
@@ -8,6 +9,7 @@ interface FormulaBarProps {
   address: string;
   value: string;
   editing: boolean;
+  combobox: ComboboxAttrs;
   onNavigate(text: string): boolean;
   onFocus(): void;
   onChange(value: string, caret: number): void;
@@ -83,6 +85,7 @@ export function FormulaBar(props: FormulaBarProps) {
           ref={setRefs}
           className={'fb-input' + (isFormula ? ' highlighted' : '')}
           aria-label="Formula bar"
+          {...props.combobox}
           value={value}
           spellCheck={false}
           autoComplete="off"

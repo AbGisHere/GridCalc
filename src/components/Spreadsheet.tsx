@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
 import {
   cellKey,
   inBounds,
@@ -25,7 +25,7 @@ import { History } from '@/state/history';
 import { SAMPLE_SHEET, stressSheet } from '@/state/samples';
 import { clampPos, jump, selectionRange, single, type Selection } from '@/state/selection';
 import { DiagnosticsPanel, type DiagnosticView } from './DiagnosticsPanel';
-import { FormulaAssist } from './FormulaAssist';
+import { comboboxAttrs, FormulaAssist } from './FormulaAssist';
 import { FormulaBar } from './FormulaBar';
 import { assistAt, canInsertRef, formulaRefs } from './formulaTokens';
 import { FunctionsPanel } from './FunctionsPanel';
@@ -48,6 +48,7 @@ function parseSavedSheet(json: string): Record<string, string> | null {
   return data;
 }
 const MAX_CLIPBOARD_CELLS = 250_000;
+const MAX_IMPORT_MB = 20;
 
 interface EditState {
   row: number;
@@ -71,6 +72,8 @@ const SHORTCUTS: [string, string][] = [
   ['Ctrl/⌘ + Arrows', 'Jump to edge of data'],
   ['Type any key', 'Replace cell contents'],
   ['Esc', 'Cancel editing'],
+  ['Esc, then Tab', 'Leave the sheet'],
+  ['F6 / Shift + F6', 'Move between toolbar, formula bar and sheet'],
   ['Delete / Backspace', 'Clear selection'],
   ['Ctrl/⌘ + Z / Y', 'Undo / Redo'],
   ['Ctrl/⌘ + C / X / V', 'Copy / Cut / Paste (formulas re-target)'],
@@ -108,6 +111,16 @@ export default function Spreadsheet() {
   const cellInputRef = useRef<HTMLInputElement>(null);
   const barInputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const toolbarRef = useRef<HTMLElement>(null);
+  const barWrapRef = useRef<HTMLDivElement>(null);
+  const workspaceRef = useRef<HTMLElement>(null);
+  const helpRef = useRef<HTMLDivElement>(null);
+  const helpButtonRef = useRef<HTMLButtonElement>(null);
+  /** Set by Escape on the grid: the next Tab leaves the sheet instead of moving to the next cell. */
+  const tabOut = useRef(false);
+  const saveWarned = useRef(false);
+  const assistId = useId();
+  const helpId = useId();
   const refInsert = useRef<{ start: number; end: number; anchor: CellPos } | null>(null);
   const lastDrag = useRef('');
   const clipboard = useRef<Clip | null>(null);
@@ -140,7 +153,9 @@ export default function Spreadsheet() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(engine.toJSON()));
       } catch {
-        // Storage full or unavailable: the sheet still works, it just won't survive a reload.
+        // Storage full or unavailable: the sheet still works, it just won't survive a reload. Say so once.
+        if (!saveWarned.current) setToast("Autosave failed: browser storage is full or blocked. Export a CSV to keep this sheet.");
+        saveWarned.current = true;
       }
     }, 500);
     return () => clearTimeout(t);
@@ -161,6 +176,25 @@ export default function Spreadsheet() {
   }, [toast]);
 
   useEffect(() => setDiagHidden(false), [active.row, active.col]);
+
+  // The shortcuts popover closes on Escape (returning focus to its button) or on a click outside it.
+  useEffect(() => {
+    if (!showHelp) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setShowHelp(false);
+      helpButtonRef.current?.focus();
+    };
+    const onDown = (e: MouseEvent) => {
+      if (!helpRef.current?.contains(e.target as Node)) setShowHelp(false);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('mousedown', onDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('mousedown', onDown);
+    };
+  }, [showHelp]);
 
   // ------------------------------------------------------------------ edits & history
   const apply = useCallback(
@@ -277,6 +311,7 @@ export default function Spreadsheet() {
   }, [editKey]);
 
   const assist = useMemo(() => (edit && !assistOff ? assistAt(edit.value, caret) : null), [edit, assistOff, caret]);
+  const assistSel = Math.min(assistIdx, Math.max(0, (assist?.suggestions.length ?? 0) - 1));
 
   const acceptSuggestion = (def: FnDef) => {
     if (!edit || !assist?.prefix) return;
@@ -301,7 +336,7 @@ export default function Spreadsheet() {
       }
       if (e.key === 'Tab' || e.key === 'Enter') {
         e.preventDefault();
-        acceptSuggestion(suggestions[Math.min(assistIdx, suggestions.length - 1)]);
+        acceptSuggestion(suggestions[assistSel]);
         return;
       }
       if (e.key === 'Escape') {
@@ -368,6 +403,8 @@ export default function Spreadsheet() {
     const lower = key.toLowerCase();
     const arrows: Record<string, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
     const page = Math.max(1, Math.floor((window.innerHeight - 200) / ROW_HEIGHT));
+    const releaseTab = tabOut.current;
+    tabOut.current = key === 'Escape';
 
     if (mod && lower === 'z') {
       e.preventDefault();
@@ -391,6 +428,7 @@ export default function Spreadsheet() {
       e.preventDefault();
       move(arrows[key][0], arrows[key][1], e.shiftKey, mod);
     } else if (key === 'Tab') {
+      if (releaseTab) return; // Escape, then Tab: let the browser move focus out of the sheet.
       e.preventDefault();
       move(0, e.shiftKey ? -1 : 1, false, false);
     } else if (key === 'Enter' && e.shiftKey) {
@@ -591,14 +629,35 @@ export default function Spreadsheet() {
   };
 
   const importCSV = async (file: File) => {
-    const rows = parseCSV(await file.text());
+    if (file.size > MAX_IMPORT_MB * 1024 * 1024) return setToast(`${file.name} is larger than ${MAX_IMPORT_MB} MB, so it wasn't imported.`);
+    let rows: string[][];
+    try {
+      rows = parseCSV(await file.text());
+    } catch {
+      return setToast(`Couldn't read ${file.name}. Check that it's a text CSV file.`);
+    }
     const data: Record<string, string> = {};
+    let clipped = false;
     rows.forEach((row, r) =>
       row.forEach((raw, c) => {
-        if (raw !== '' && r < SHEET_ROWS && c < SHEET_COLS) data[toA1(r, c)] = raw;
+        if (raw === '') return;
+        if (r < SHEET_ROWS && c < SHEET_COLS) data[toA1(r, c)] = raw;
+        else clipped = true;
       }),
     );
     replaceSheet(data, `Import ${file.name}`);
+    if (clipped) setToast(`Imported ${file.name}. Cells outside A1:${toA1(SHEET_ROWS - 1, SHEET_COLS - 1)} were left out.`);
+  };
+
+  /** F6 / Shift+F6 cycle focus between the toolbar, the name box and the sheet, as in desktop spreadsheets. */
+  const onAppKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'F6') return;
+    e.preventDefault();
+    const regions = [toolbarRef.current, barWrapRef.current, workspaceRef.current];
+    const current = regions.findIndex((r) => r?.contains(document.activeElement));
+    const next = current < 0 ? 2 : (current + (e.shiftKey ? 2 : 1)) % 3;
+    if (next === 2) gridRef.current?.focus();
+    else regions[next]?.querySelector<HTMLElement>('button:not(:disabled), input')?.focus();
   };
 
   // ------------------------------------------------------------------ derived view state
@@ -652,10 +711,20 @@ export default function Spreadsheet() {
   const refMarks = useMemo(() => (edit ? formulaRefs(edit.value) : []), [edit]);
   const barValue = edit ? edit.value : (activeRec?.raw ?? '');
   const showDiag = diagView && !diagHidden;
+  const assistOpen = (target: EditState['target']) => edit?.target === target && !!assist?.suggestions.length;
 
   const selectionLabel = (() => {
     const r = selectionRange(sel);
     return r.r1 === r.r2 && r.c1 === r.c2 ? activeAddress : rangeToA1(r);
+  })();
+
+  /** What a screen reader hears when the selection or the active cell's value changes. */
+  const announcement = (() => {
+    if (edit) return '';
+    if (selectionLabel !== activeAddress) return `${selectionLabel} selected, ${selStats.cells.toLocaleString()} cells`;
+    if (!activeRec) return `${activeAddress}, blank`;
+    const shown = `${activeAddress}, ${displayValue(activeRec.value)}${activeRec.value instanceof CellError ? ' error' : ''}`;
+    return activeRec.raw.startsWith('=') ? `${shown}, formula ${activeRec.raw}` : shown;
   })();
 
   const cellEditor = edit && (
@@ -667,6 +736,7 @@ export default function Spreadsheet() {
         value={edit.value}
         spellCheck={false}
         autoComplete="off"
+        {...comboboxAttrs(assistId, assistOpen('cell'), assistSel)}
         style={{ width: Math.max(colWidths[edit.col] + 2, Math.min(560, edit.value.length * 8 + 24)) }}
         onChange={(e) => changeEdit(e.target.value, e.target.selectionStart ?? e.target.value.length)}
         onSelect={(e) => setCaret((e.target as HTMLInputElement).selectionStart ?? 0)}
@@ -675,7 +745,7 @@ export default function Spreadsheet() {
       />
       {edit.target === 'cell' && assist && (
         <div className="assist-anchor">
-          <FormulaAssist info={assist} selected={assistIdx} onPick={acceptSuggestion} />
+          <FormulaAssist id={assistId} info={assist} selected={assistSel} onPick={acceptSuggestion} />
         </div>
       )}
     </>
@@ -683,8 +753,8 @@ export default function Spreadsheet() {
 
   // ------------------------------------------------------------------ render
   return (
-    <div className="app">
-      <header className="toolbar">
+    <div className="app" onKeyDown={onAppKeyDown}>
+      <header className="toolbar" ref={toolbarRef}>
         <div className="brand">
           <span className="brand-mark" aria-hidden>
             <svg viewBox="0 0 20 20" width="20" height="20">
@@ -741,12 +811,18 @@ export default function Spreadsheet() {
           <button className={'tool' + (showFns ? ' on' : '')} onClick={() => setShowFns((v) => !v)}>
             ƒ Functions
           </button>
-          <div className="help-wrap">
-            <button className={'tool' + (showHelp ? ' on' : '')} onClick={() => setShowHelp((v) => !v)} aria-expanded={showHelp}>
+          <div className="help-wrap" ref={helpRef}>
+            <button
+              ref={helpButtonRef}
+              className={'tool' + (showHelp ? ' on' : '')}
+              onClick={() => setShowHelp((v) => !v)}
+              aria-expanded={showHelp}
+              aria-controls={helpId}
+            >
               ⌨ Shortcuts
             </button>
             {showHelp && (
-              <div className="help-pop" onMouseLeave={() => setShowHelp(false)}>
+              <div className="help-pop" id={helpId} role="region" aria-label="Keyboard shortcuts">
                 <table>
                   <tbody>
                     {SHORTCUTS.map(([k, d]) => (
@@ -763,12 +839,13 @@ export default function Spreadsheet() {
         </div>
       </header>
 
-      <div className="bar-wrap">
+      <div className="bar-wrap" ref={barWrapRef}>
         <FormulaBar
           inputRef={barInputRef}
           address={selectionLabel}
           value={barValue}
           editing={edit?.target === 'bar'}
+          combobox={comboboxAttrs(assistId, assistOpen('bar'), assistSel)}
           onNavigate={goTo}
           onFocus={() => {
             if (!edit) startEdit(active, undefined, 'edit', 'bar');
@@ -781,12 +858,12 @@ export default function Spreadsheet() {
         />
         {edit?.target === 'bar' && assist && (
           <div className="assist-anchor bar">
-            <FormulaAssist info={assist} selected={assistIdx} onPick={acceptSuggestion} />
+            <FormulaAssist id={assistId} info={assist} selected={assistSel} onPick={acceptSuggestion} />
           </div>
         )}
       </div>
 
-      <main className="workspace">
+      <main className="workspace" ref={workspaceRef}>
         <div className="grid-host" onCopy={(e) => onCopy(e, false)} onCut={(e) => onCopy(e, true)} onPaste={onPaste}>
           <Grid
             ref={gridRef}
@@ -814,6 +891,9 @@ export default function Spreadsheet() {
             onKeyDown={onGridKeyDown}
             onRenderStats={setRendered}
           />
+          <p className="sr-only" aria-live="polite">
+            {announcement}
+          </p>
           {showDiag && (
             <DiagnosticsPanel
               view={diagView}
@@ -823,7 +903,15 @@ export default function Spreadsheet() {
             />
           )}
         </div>
-        {showFns && <FunctionsPanel onInsert={insertFunction} onClose={() => setShowFns(false)} />}
+        {showFns && (
+          <FunctionsPanel
+            onInsert={insertFunction}
+            onClose={() => {
+              setShowFns(false);
+              gridRef.current?.focus();
+            }}
+          />
+        )}
       </main>
 
       <StatusBar

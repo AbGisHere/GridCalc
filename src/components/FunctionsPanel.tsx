@@ -20,7 +20,7 @@ export function FunctionsPanel({ onInsert, onClose }: FunctionsPanelProps) {
   }, [q]);
 
   return (
-    <aside className="fn-panel" aria-label="Function reference">
+    <aside className="fn-panel" aria-label="Function reference" onKeyDown={(e) => e.key === 'Escape' && onClose()}>
       <header>
         <h2>
           Functions <span className="count">{FUNCTIONS.length}</span>

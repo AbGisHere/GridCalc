@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
+import { useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 import { colToLetters, type CellPos, type RangeBounds } from '@/engine/address';
 import type { SpreadsheetEngine } from '@/engine/engine';
 import { CellError, displayValue } from '@/engine/values';
@@ -57,6 +57,7 @@ export function Grid(props: GridProps) {
   const [fillPreview, setFillPreview] = useState<RangeBounds | null>(null);
   const layout = useMemo(() => new ColumnLayout(colWidths), [colWidths]);
   const rows = engine.rows;
+  const hintId = useId();
 
   // Latest props for window-level listeners attached during drags.
   const live = useRef(props);
@@ -150,14 +151,17 @@ export function Grid(props: GridProps) {
         lastY = e.clientY;
         onMove(posFromClient(e.clientX, e.clientY));
       };
+      // Releasing the button or losing the window (Alt+Tab mid-drag) both end the drag.
       const up = () => {
         cancelAnimationFrame(raf);
         window.removeEventListener('mousemove', move);
         window.removeEventListener('mouseup', up);
+        window.removeEventListener('blur', up);
         onEnd?.();
       };
       window.addEventListener('mousemove', move);
       window.addEventListener('mouseup', up);
+      window.addEventListener('blur', up);
       raf = requestAnimationFrame(tick);
     },
     [posFromClient],
@@ -229,9 +233,11 @@ export function Grid(props: GridProps) {
     const up = () => {
       window.removeEventListener('mousemove', move);
       window.removeEventListener('mouseup', up);
+      window.removeEventListener('blur', up);
     };
     window.addEventListener('mousemove', move);
     window.addEventListener('mouseup', up);
+    window.addEventListener('blur', up);
   };
 
   // ----------------------------------------------------------- render helpers
@@ -319,11 +325,15 @@ export function Grid(props: GridProps) {
       tabIndex={0}
       onScroll={syncViewport}
       onKeyDown={props.onKeyDown}
-      role="grid"
-      aria-rowcount={rows}
-      aria-colcount={layout.count}
+      role="application"
+      aria-roledescription="spreadsheet"
       aria-label="Spreadsheet"
+      aria-describedby={hintId}
     >
+      <p id={hintId} className="sr-only">
+        Arrow keys move between cells. Type to replace a cell, or press Enter or F2 to edit it. Press Escape, then Tab, to
+        leave the sheet. F6 moves between the toolbar, the formula bar and the sheet.
+      </p>
       <div className="grid-canvas" style={{ width: ROW_HEADER_WIDTH + layout.total, height: HEADER_HEIGHT + rows * ROW_HEIGHT }}>
         <div className="col-headers" style={{ width: ROW_HEADER_WIDTH + layout.total }}>
           <div
