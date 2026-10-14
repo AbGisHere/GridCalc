@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
-// The app makes no network requests and loads nothing from other origins, so everything is locked to 'self'.
+// Sheet data stays local. Production analytics uses Vercel's same-origin insights routes.
 // Next.js needs 'unsafe-inline' for its hydration scripts, and dev mode additionally needs eval and a websocket for HMR.
 const csp = [
   "default-src 'self'",

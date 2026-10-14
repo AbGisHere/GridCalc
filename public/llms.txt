@@ -2,7 +2,7 @@
 
 > A spreadsheet web app that runs entirely in the browser. It has a formula engine written from scratch (lexer, Pratt parser, tree-walking evaluator), dependency-aware incremental recalculation, and a virtualized 100,000 × 100 grid. Errors explain themselves with a caret under the problem and a suggested fix.
 
-- Data stays in the browser (localStorage); the app makes no network requests.
+- Sheet contents stay in the browser (localStorage). Vercel Web Analytics measures page visits; cell contents and formulas are not sent to analytics.
 - 96 built-in functions, including SUM, IF, VLOOKUP, XLOOKUP, INDEX/MATCH, SUMIFS and TEXTJOIN.
 - Circular references are detected and reported as #CIRC! with the cycle path.
 - Light, dark and semi themes; semi keeps the interface dark around a white sheet.

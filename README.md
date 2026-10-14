@@ -13,6 +13,10 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 
 **[Live demo →](https://gridcalc.abgupta.me)**
 
+Sheet contents and formulas stay in your browser. Vercel Web Analytics measures page visits; no sheet data is sent to analytics.
+
+For Vercel deployments, enable **Web Analytics** in the project's Vercel dashboard, then deploy. The root layout includes `@vercel/analytics/next` in production; analytics uses same-origin insights routes allowed by the existing Content Security Policy. Development visits are not tracked.
+
 ## Features
 
 **Grid & editing**

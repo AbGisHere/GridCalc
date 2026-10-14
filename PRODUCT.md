@@ -26,7 +26,7 @@ Core requirements it must visibly satisfy:
 - **Self-explaining errors.** Every error shows the formula with a caret under the problem, a plain-language explanation, a suggestion and, where possible, a one-click fix that is re-parsed before it is offered. Errors that flow in from other cells name and link to their source.
 - **Built from scratch.** Hand-written lexer, Pratt parser, tree-walking evaluator and dependency graph (iterative Tarjan SCC). No spreadsheet or formula libraries; the only runtime dependencies are React and Next.js.
 - **Visible engine.** The status bar shows how many cells an edit recalculated and how long it took, and how many cells are in the DOM out of 10,000,000 (the "DOM cells" counter), and the recalculated cells light up in dependency order after each edit, so a reviewer can watch virtualization and incremental recalculation working.
-- **Private, no backend.** Data stays in `localStorage`; the app makes no network requests.
+- **Local sheet data.** Sheet contents stay in `localStorage`. Vercel Web Analytics measures page visits without receiving cell contents or formulas.
 
 ## Operating Context
 
@@ -64,7 +64,7 @@ Core requirements it must visibly satisfy:
 2. **Errors teach.** A failure state is a feature: it explains what went wrong, where, and how to fix it.
 3. **Show the engine.** Make the invisible work (recalculation, dependencies, virtualization) observable without cluttering the sheet.
 4. **Spreadsheet expectations first.** Keyboard behaviour, selection and editing match what Excel and Google Sheets users already know.
-5. **Nothing leaves the browser.** No backend, no tracking, no third-party requests.
+5. **Sheet contents stay in the browser.** No sheet backend; page-visit analytics must never receive cell contents or formulas.
 
 ## Accessibility & Inclusion
 

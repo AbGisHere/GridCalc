@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-15
+
+### Added
+- Vercel Web Analytics in the root layout to measure page visits. Sheet contents and formulas remain local; the README documents dashboard activation and the privacy docs distinguish analytics from sheet storage.
+
 ## [0.2.14] - 2026-10-15
 
 ### Documentation

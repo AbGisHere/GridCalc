@@ -1,7 +1,7 @@
 {
   "name": "gridcalc",
   "private": true,
-  "version": "0.2.14",
+  "version": "0.3.0",
   "description": "A virtualized spreadsheet web app with a custom formula parser, evaluator and dependency-aware recalculation engine.",
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
     "check:h1": "tsx scripts/check-h1.ts"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "next": "^16.4.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
