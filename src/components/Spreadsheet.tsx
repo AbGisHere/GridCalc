@@ -17,7 +17,7 @@ import {
   type CellPos,
   type RangeBounds,
 } from '@/engine/address';
-import { SpreadsheetEngine, type CellEdit } from '@/engine/engine';
+import { SpreadsheetEngine, type CellEdit, type RecalcStats } from '@/engine/engine';
 import type { FnDef } from '@/engine/functions';
 import { explainRuntimeError, parseFormula } from '@/engine/parser';
 import { normalizeFormula, shiftFormula } from '@/engine/references';
@@ -64,6 +64,10 @@ interface EditState {
   mode: 'enter' | 'edit';
   target: 'cell' | 'bar';
 }
+
+/** What an edit cost, for its status-bar message: "3 formulas recalculated in 0.2 ms". */
+const recalcSummary = (s: RecalcStats) =>
+  `${s.evaluated.toLocaleString()} formula${s.evaluated === 1 ? '' : 's'} recalculated in ${s.ms.toFixed(1)} ms`;
 
 /** Status-bar message; `undo` offers to reverse the action that produced it (replacing the whole sheet). */
 interface Toast {
@@ -198,7 +202,7 @@ export default function Spreadsheet() {
 
   useEffect(() => {
     if (!toast || toast === heldToast) return;
-    const t = setTimeout(() => setToast(undefined), toast.undo ? 8000 : 3500);
+    const t = setTimeout(() => setToast(undefined), 5000);
     return () => clearTimeout(t);
   }, [toast, heldToast]);
 
@@ -212,9 +216,8 @@ export default function Spreadsheet() {
         .filter((e) => e.before !== e.raw);
       if (!changes.length) return false;
       history.push({ label, edits: changes, selection: sel });
-      engine.setCells(changes);
-      // A newer edit makes a pending "Undo" in the status bar point at the wrong action.
-      setToast((t) => (t?.undo ? undefined : t));
+      // Replaces any pending "Undo" in the status bar, which would otherwise point at the wrong action.
+      setToast({ text: `${label}: ${recalcSummary(engine.setCells(changes))}` });
       bumpHistory();
       return true;
     },
@@ -225,10 +228,10 @@ export default function Spreadsheet() {
     const r = history.undo();
     if (!r) return;
     setEdit(null);
-    engine.setCells(r.edits);
+    const s = engine.setCells(r.edits);
     setSel(r.entry.selection);
     gridRef.current?.scrollIntoView(r.entry.selection.anchor);
-    say(`Undid: ${r.entry.label}`);
+    say(`Undid ${r.entry.label}: ${recalcSummary(s)}`);
     bumpHistory();
   };
 
@@ -236,9 +239,9 @@ export default function Spreadsheet() {
     const r = history.redo();
     if (!r) return;
     setEdit(null);
-    engine.setCells(r.edits);
+    const s = engine.setCells(r.edits);
     setSel(r.entry.selection);
-    say(`Redid: ${r.entry.label}`);
+    say(`Redid ${r.entry.label}: ${recalcSummary(s)}`);
     bumpHistory();
   };
 
@@ -477,7 +480,7 @@ export default function Spreadsheet() {
     } else if (key === 'F9') {
       e.preventDefault();
       const s = engine.recalculateAll();
-      say(`Recalculated all ${s.evaluated.toLocaleString()} formulas in ${s.ms.toFixed(1)} ms`);
+      say(`Recalculate all (F9): ${recalcSummary(s)}`);
     } else if (key === 'Home') {
       e.preventDefault();
       const next = mod ? { row: 0, col: 0 } : { row: active.row, col: 0 };
@@ -610,7 +613,6 @@ export default function Spreadsheet() {
       focusInputAt(fix.length);
     } else {
       apply([{ row: active.row, col: active.col, raw: fix }], `Fix ${activeAddress}`);
-      say(`Applied fix to ${activeAddress}`);
       gridRef.current?.focus();
     }
   };
@@ -874,7 +876,7 @@ export default function Spreadsheet() {
 
         <div className="tool-group">
           {sheetActions.slice(0, 2).map((a) => (
-            <button key={a.label} className="tool wide-only" onClick={a.run}>
+            <button key={a.label} className="tool wide-only" onClick={a.run} title={a.detail}>
               <Icon name={a.icon!} />
               <span className="tool-label">{a.label}</span>
             </button>
@@ -1041,6 +1043,7 @@ export default function Spreadsheet() {
         errors={errorKeys.length}
         onNextError={() => jumpToError(false)}
         message={toast?.text}
+        onHold={(held) => setHeldToast(held ? toast : undefined)}
         onUndo={
           toast?.undo
             ? () => {
@@ -1049,7 +1052,6 @@ export default function Spreadsheet() {
               }
             : undefined
         }
-        onHold={(held) => setHeldToast(held ? toast : undefined)}
       />
     </div>
   );

@@ -1360,6 +1360,18 @@ button {
   color: var(--error);
 }
 
+/* Below this width the labelled toolbar would wrap onto a second row; undo, redo and the CSV buttons go icon-only. */
+@media (max-width: 900px) {
+  .tool-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 760px) {
   /* Two lines on a phone, so the engine metrics stay visible next to the error count. */
   .status-bar {
@@ -1406,7 +1418,7 @@ button {
   .diag-body {
     grid-column: 1 / -1;
   }
-  /* One row on a phone: icon-only undo, redo and CSV buttons (the labels stay for screen readers), no shortcuts. */
+  /* One row on a phone: the brand name is for screen readers only, and there are no shortcuts. */
   .toolbar {
     flex-wrap: nowrap;
     gap: 4px;
@@ -1448,7 +1460,6 @@ button {
     width: auto;
     max-width: none;
   }
-  .tool-label,
   .toolbar .brand-name {
     position: absolute;
     width: 1px;

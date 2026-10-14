@@ -5,6 +5,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.24] - 2026-10-14
+
+### Changed
+- Every edit, fill, paste, fix, undo and redo now shows its own status-bar message with what it cost, such as "Edit B2: 10,008 formulas recalculated in 17.3 ms". Before, an edit cleared the previous message and showed nothing.
+- Status-bar messages hide after 5 seconds (they still stay while the pointer or keyboard focus is on them).
+- Between 761 and 900 px wide, such as on a tablet, Undo, Redo, Import CSV and Export CSV show as icons, so the toolbar stays on one row instead of wrapping onto two. The CSV buttons show their description as a tooltip.
+
 ## [0.1.23] - 2026-10-14
 
 ### Added
