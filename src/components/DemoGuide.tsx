@@ -17,13 +17,13 @@ export function DemoGuide({ kind, onTryFix, onLoadStress, onStartBlank, onGoTo, 
       <div className="guide-content">
         <p>
           {kind === 'sample'
-            ? 'This sample is a live sheet, and the red cells in column H are intentional errors. Try a fix, load 10k rows or start blank; Undo restores the sample.'
+            ? 'The red cells are intentional errors: press F8 or Try a fix to see one explained. Loading 10k rows or starting blank replaces the sample; Undo restores it while this page is open.'
             : 'Compare recalculation: edit B2 to update the long dependency chain, then B10001 to update only its end. Watch Recalc below.'}
         </p>
         <div className="guide-actions">
           {kind === 'sample' ? (
             <>
-              <button className="guide-action" onClick={onTryFix}>Try a fix</button>
+              <button className="guide-action primary" onClick={onTryFix}>Try a fix</button>
               <button className="guide-action" onClick={onLoadStress}>Load 10k rows</button>
               <button className="guide-action" onClick={onStartBlank}>Start blank</button>
             </>

@@ -8,6 +8,7 @@
   --text-sm: 12px;
   --text-base: 13px;
   --text-md: 14px;
+  --text-lg: 16px;
   /* Name box + ƒx button; the diagnostics gutter shares it so formulas line up. */
   --gutter: 148px;
   --sans: ui-sans-serif, -apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif;
@@ -535,7 +536,7 @@ button {
   color: var(--muted);
 }
 
-.help-content h3 {
+.help-content h2 {
   margin: 18px 0 6px;
   font-size: var(--text-base);
 }
@@ -613,6 +614,18 @@ button {
 .guide-action:hover {
   border-color: var(--accent);
   background: var(--accent-soft);
+}
+
+/* Trying a fix is the demo's point, so it leads. */
+.guide-action.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.guide-action.primary:hover {
+  background: var(--accent-strong);
 }
 
 /* On a phone the three actions share one row, so the guide doesn't push the sheet down. */
@@ -1394,6 +1407,16 @@ button {
   flex-basis: 100%;
 }
 
+/* The panel scrolls when space is short; Apply fix stays docked in view at its bottom edge. */
+.diag-fix {
+  position: sticky;
+  bottom: -12px;
+  margin-inline: -12px;
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
 .diag-fix code {
   flex: 1;
   margin-left: -12px;
@@ -1441,7 +1464,7 @@ button {
 
 .fn-panel h2 {
   margin: 0;
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
 }
 
 .fn-panel .count {
@@ -1499,10 +1522,11 @@ button {
   margin: 14px 6px 4px;
 }
 
+/* Two even rows of three, so no category is left alone on a line. */
 .fn-cats {
   flex-shrink: 0;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 4px;
   margin: 0 14px 6px;
 }
@@ -1896,7 +1920,17 @@ button {
   }
 }
 
-/* Phones narrower than an iPhone (390px) show 10,000,000 as 10M, so both engine metrics stay on one line even after a 10,000-cell recalculation. */
+/* Phone-width footers show 10,000,000 as 10M and drop the units ("RECALC 20 in 6.20 ms", "DOM 156 of 10M"), so both engine metrics and their ? stay on one line. */
+@media (max-width: 480px) {
+  .total-full,
+  .metric-unit {
+    display: none;
+  }
+  .total-short {
+    display: inline;
+  }
+}
+
 @media (max-width: 389px) {
   /* The menu chevrons go, so the theme-and-help menu still fits on the toolbar's one row. */
   .menu-wrap .tool > .icon:last-child {
@@ -1908,22 +1942,12 @@ button {
   .tool-group {
     padding-left: 2px;
   }
-  .total-full {
-    display: none;
-  }
-  .total-short {
-    display: inline;
-  }
   .status-right {
     gap: 12px;
   }
 }
 
-/* Below 360px the recalc metric also drops its unit: "RECALC 10,008 in 26 ms". */
 @media (max-width: 359px) {
-  .metric-unit {
-    display: none;
-  }
   .metric-label {
     margin-right: 4px;
   }
@@ -1998,6 +2022,73 @@ button {
 
 @media (pointer: coarse) and (hover: none) {
   .assist-help {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ engine metrics help */
+.status-bar {
+  position: relative;
+}
+
+.metrics-help .tool {
+  min-height: 0;
+  height: 24px;
+  min-width: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--chrome-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+/* A thumb-sized tap area around the small visible button. */
+@media (any-pointer: coarse) {
+  .metrics-help .tool {
+    position: relative;
+  }
+  .metrics-help .tool::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+}
+
+/* Opens upwards from the footer, at every width. */
+.status-bar .metrics-help .menu-pop {
+  top: auto;
+  bottom: calc(100% + 6px);
+  width: min(320px, calc(100vw - 16px));
+}
+
+.metrics-list {
+  margin: 0;
+  padding: 6px 8px;
+}
+
+.metrics-list div + div {
+  margin-top: 8px;
+}
+
+.metrics-list dt {
+  color: var(--info);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.metrics-list dd {
+  margin: 2px 0 0;
+  color: var(--fg);
+  line-height: 1.5;
+}
+
+/* On the smallest phones the diagnostics panel needs the room: the footer keeps only the save state and error count. */
+@media (max-width: 389px) {
+  .app:has(.diag) .status-right,
+  .app:has(.diag) .status-left:not(:has(.status-message)) {
     display: none;
   }
 }

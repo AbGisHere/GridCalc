@@ -2,6 +2,7 @@
 
 import type { RecalcStats } from '@/engine/engine';
 import { formatNumber } from '@/engine/values';
+import { ToolMenu } from './ToolMenu';
 
 export interface SelectionStats {
   cells: number;
@@ -25,8 +26,8 @@ interface StatusBarProps {
   errors: number;
   onNextError(): void;
   message?: string;
-  /** Shown with the message when the action behind it can be reversed. */
-  onUndo?(): void;
+  /** A follow-up shown with the message, such as Undo after a sheet replacement or Show for a new error. */
+  action?: { label: string; run(): void };
   /** True while the pointer or keyboard focus is on the message, so it doesn't vanish mid-read or under the Undo button. */
   onHold(held: boolean): void;
 }
@@ -37,7 +38,14 @@ const compact = new Intl.NumberFormat('en-US', { notation: 'compact' });
 /** One format for every recalculation time, so the status message and the Recalc metric always agree. */
 export const formatMs = (ms: number) => `${ms.toFixed(ms < 10 ? 2 : 0)} ms`;
 
-export function StatusBar({ saveState, onExport, onBackup, stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message, onUndo, onHold }: StatusBarProps) {
+const METRICS: [string, string][] = [
+  ['Recalc', 'How many formulas the last change re-evaluated, and how long that took. Only cells downstream of an edit are recalculated.'],
+  ['Circular', 'Formulas in a reference loop. They show #CIRC! and name the cells in the loop.'],
+  ['DOM cells', 'Cells that exist in the page right now, out of 10,000,000 addressable ones. The grid only renders what is on screen.'],
+  ['Used', 'Cells with contents.'],
+];
+
+export function StatusBar({ saveState, onExport, onBackup, stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message, action, onHold }: StatusBarProps) {
   return (
     <footer className="status-bar">
       <p className="sr-only" role="status">
@@ -72,18 +80,20 @@ export function StatusBar({ saveState, onExport, onBackup, stats, recalc, render
         onFocus={() => onHold(true)}
         onBlur={(e) => onHold(e.currentTarget.matches(':hover'))}
       >
-        {message ? (
+        {/* A message sits beside the selection stats rather than replacing them. */}
+        {message && (
           <>
             <span className="status-message" title={message}>
               {message}
             </span>
-            {onUndo && (
-              <button className="status-undo" onClick={onUndo}>
-                Undo
+            {action && (
+              <button className="status-undo" onClick={action.run}>
+                {action.label}
               </button>
             )}
           </>
-        ) : stats && stats.numeric > 0 ? (
+        )}
+        {stats && stats.numeric > 0 ? (
           <>
             <span>
               Sum <b>{formatNumber(stats.sum)}</b>
@@ -104,12 +114,12 @@ export function StatusBar({ saveState, onExport, onBackup, stats, recalc, render
             Count <b>{fmt(stats.count)}</b>
           </span>
         ) : (
-          <span>Ready</span>
+          !message && <span>Ready</span>
         )}
       </div>
       <div className="status-right" role="group" aria-label="Engine">
         {/* Keyed by the recalculation, so each new one replays the pulse alongside the wave on the grid. */}
-        <span className="metric metric-recalc" key={recalc ? `${recalc.evaluated}:${recalc.ms}` : ''} title="Only cells downstream of an edit are re-evaluated">
+        <span className="metric metric-recalc" key={recalc ? `${recalc.evaluated}:${recalc.ms}` : ''}>
           <span className="metric-label">Recalc</span>
           {recalc && (recalc.evaluated > 0 || usedCells > 0) ? (
             <>
@@ -121,8 +131,8 @@ export function StatusBar({ saveState, onExport, onBackup, stats, recalc, render
             <span>none yet</span>
           )}
         </span>
-        <span className="metric" title="Virtualization: only visible cells exist in the DOM">
-          <span className="metric-label">DOM cells</span>
+        <span className="metric">
+          <span className="metric-label">DOM<span className="metric-unit"> cells</span></span>
           <b>{fmt(rendered)}</b> of <span className="total-full">{fmt(totalCells)}</span>
           <span className="total-short">{compact.format(totalCells)}</span>
         </span>
@@ -130,6 +140,26 @@ export function StatusBar({ saveState, onExport, onBackup, stats, recalc, render
           <span className="metric-label">Used</span>
           <b>{fmt(usedCells)}</b>
         </span>
+        <ToolMenu
+          className="end metrics-help"
+          title="What the engine metrics mean"
+          label={
+            <>
+              ?<span className="sr-only"> What the engine metrics mean</span>
+            </>
+          }
+        >
+          {() => (
+            <dl className="metrics-list">
+              {METRICS.map(([term, meaning]) => (
+                <div key={term}>
+                  <dt>{term}</dt>
+                  <dd>{meaning}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </ToolMenu>
       </div>
     </footer>
   );

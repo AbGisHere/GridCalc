@@ -21,10 +21,10 @@ export function HelpContent() {
   return (
     <div className="help-content">
       <p>Start in a cell with text, a number or a formula such as =SUM(A1:A3). Demos provides worked examples.</p>
-      <h3>Touch</h3>
+      <h2>Touch</h2>
       <p>Tap a cell, then edit in the formula bar; double-tap starts editing there. Apply saves the edit; Cancel discards it.</p>
       <p>Swipe to scroll. Drag the round grip at the selection’s top-left to select a range, or its bottom-right fill handle to copy formulas or continue a series.</p>
-      <h3>Keyboard & pointer</h3>
+      <h2>Keyboard & pointer</h2>
       <table>
         <tbody>
           {SHORTCUTS.map(([key, description]) => (

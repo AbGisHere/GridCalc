@@ -114,7 +114,6 @@ export function stressSheet(rows = 10_000): Record<string, string> {
     I5: `=VLOOKUP("Item 5000", A2:D${last}, 4, FALSE)`,
     H6: 'Check',
     I6: `=IF(ROUND(I1-E${last}, 6)=0, "Running total matches", "Mismatch")`,
-    H8: 'Try: edit B2 (ripples through ~10k cells) vs. B10001 (a few cells)',
   });
   return cells;
 }

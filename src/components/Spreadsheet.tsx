@@ -70,10 +70,10 @@ interface EditState {
 const recalcSummary = (s: RecalcStats) =>
   `${s.evaluated.toLocaleString()} formula${s.evaluated === 1 ? '' : 's'} recalculated in ${formatMs(s.ms)}`;
 
-/** Status-bar message; `undo` offers to reverse the action that produced it (replacing the whole sheet). */
+/** Status-bar message, with an optional follow-up such as undoing a sheet replacement or showing a new error. */
 interface Toast {
   text: string;
-  undo?: boolean;
+  action?: { label: string; run(): void };
 }
 
 interface Clip {
@@ -94,7 +94,7 @@ const contentWidths = (engine: SpreadsheetEngine) =>
 
 const DEMOS = [
   { label: 'Sample sheet', detail: 'Working formulas, then one of each error to fix', data: () => SAMPLE_SHEET, guide: 'sample' as const },
-  { label: '10k-row stress test', detail: '60,000 cells and 30,000 formulas', data: stressSheet, guide: 'stress' as const },
+  { label: '10k-row stress test', detail: 'About 60,000 cells and 30,000 formulas', data: stressSheet, guide: 'stress' as const },
 ];
 
 export default function Spreadsheet() {
@@ -181,7 +181,11 @@ export default function Spreadsheet() {
       data = null;
     }
     engine.load(firstVisit ? SAMPLE_SHEET : (data ?? {}));
-    if (firstVisit) setDemoGuide('sample');
+    if (firstVisit) {
+      setDemoGuide('sample');
+      // Read once by screen readers too, since focus starts on the sheet rather than the guide.
+      say('Sample sheet: the red cells are intentional errors. Press F8 to jump to one and see it explained.');
+    }
     if (!widths) setColWidths(contentWidths(engine));
     setLoaded(true);
     gridRef.current?.focus();
@@ -262,6 +266,14 @@ export default function Spreadsheet() {
     bumpHistory();
   };
 
+  const undoAction = {
+    label: 'Undo',
+    run: () => {
+      undo();
+      gridRef.current?.focus();
+    },
+  };
+
   const replaceSheet = (data: Record<string, string>, label: string, guide: 'sample' | 'stress' | null = null) => {
     const edits: CellEdit[] = [];
     const current = engine.toJSON();
@@ -287,7 +299,7 @@ export default function Spreadsheet() {
     const s = engine.lastStats;
     const text = !engine.cellCount ? 'Sheet cleared' : s ? `${label}: ${engine.cellCount.toLocaleString()} cells, ${s.evaluated.toLocaleString()} formulas evaluated in ${formatMs(s.ms)}` : label;
     // No confirmation step: replacing the sheet is one undoable edit, and the message offers the undo right there.
-    setToast({ text, undo: hadCells && replaced });
+    setToast({ text, action: hadCells && replaced ? undoAction : undefined });
   };
 
   // ------------------------------------------------------------------ editing
@@ -310,7 +322,15 @@ export default function Spreadsheet() {
 
   const commitEdit = (dr = 0, dc = 0) => {
     if (!edit) return;
-    apply([{ row: edit.row, col: edit.col, raw: normalizeFormula(edit.value) }], `Edit ${toA1(edit.row, edit.col)}`);
+    const address = toA1(edit.row, edit.col);
+    apply([{ row: edit.row, col: edit.col, raw: normalizeFormula(edit.value) }], `Edit ${address}`);
+    // A committed error is news, not a routine recalculation: say so, and offer to show the diagnosis.
+    const rec = engine.getRecord(edit.row, edit.col);
+    const error = rec?.value instanceof CellError && !rec.value.origin ? rec.value : null;
+    if (rec?.diagnostic || error) {
+      const problem = rec?.diagnostic ? `has a formula error: ${rec.diagnostic.message}` : `shows ${error!.code}: ${error!.message}`;
+      setToast({ text: `${address} ${problem}`, action: { label: 'Show', run: () => goTo(address) } });
+    }
     setEdit(null);
     const next = clampPos({ row: edit.row + dr, col: edit.col + dc });
     setSel(single(next.row, next.col));
@@ -753,7 +773,7 @@ export default function Spreadsheet() {
       }),
     );
     replaceSheet(data, `Import ${file.name}`);
-    if (clipped) setToast((t) => ({ text: `Imported ${file.name}. Cells outside A1:${LAST_CELL_A1} were left out.`, undo: t?.undo }));
+    if (clipped) setToast((t) => ({ text: `Imported ${file.name}. Cells outside A1:${LAST_CELL_A1} were left out.`, action: t?.action }));
   };
 
   const closeFunctions = () => {
@@ -898,7 +918,7 @@ export default function Spreadsheet() {
 
   const sheetActions: { label: string; detail: string; run(): void }[] = [
     { label: 'Download backup', detail: 'Keep cell contents and formulas in a GridCalc file', run: exportBackup },
-    { label: 'Restore backup', detail: 'Replace the sheet with a GridCalc backup; Undo restores it', run: () => backupFileRef.current?.click() },
+    { label: 'Restore backup', detail: 'Replace the sheet with a GridCalc backup; Undo restores it while this page is open', run: () => backupFileRef.current?.click() },
     { label: 'Import CSV', detail: 'Replace the sheet with a .csv file', run: () => fileRef.current?.click() },
     { label: 'Export values as CSV', detail: 'Download calculated values; formulas are not included', run: exportCSV },
   ];
@@ -946,7 +966,7 @@ export default function Spreadsheet() {
           >
             {(close) => (
               <>
-                <p className="menu-note">Loading a demo replaces this sheet. Undo restores it.</p>
+                <p className="menu-note">Loading a demo replaces this sheet. Undo restores it while this page is open.</p>
                 {DEMOS.map((d) => (
                 <button
                   key={d.label}
@@ -1007,7 +1027,7 @@ export default function Spreadsheet() {
                   }}
                 >
                   <b>{engine.cellCount ? `Clear ${engine.cellCount.toLocaleString()} cell${engine.cellCount === 1 ? '' : 's'}` : 'Clear sheet'}</b>
-                  <span>Empty the sheet; Undo restores it</span>
+                  <span>Empty the sheet; Undo restores it while this page is open</span>
                 </button>
               </>
             )}
@@ -1193,15 +1213,8 @@ export default function Spreadsheet() {
         errors={errorKeys.length}
         onNextError={() => jumpToError(false)}
         message={toast?.text}
+        action={toast?.action}
         onHold={(held) => setHeldToast(held ? toast : undefined)}
-        onUndo={
-          toast?.undo
-            ? () => {
-                undo();
-                gridRef.current?.focus();
-              }
-            : undefined
-        }
       />
     </div>
   );

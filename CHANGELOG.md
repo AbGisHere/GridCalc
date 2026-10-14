@@ -5,6 +5,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-10-15
+
+### Added
+- Committing a formula that errors says so in the status bar ("J20 has a formula error: Missing closing parenthesis." or "K1 shows #DIV/0!: …") with a **Show** button that selects the cell and opens its diagnosis, instead of reporting a routine recalculation.
+- A **?** beside the engine metrics explains Recalc, Circular, DOM cells and Used, replacing hover-only tooltips that keyboard and touch users couldn't reach.
+- A first visit announces the sample to screen readers too: "Press F8 to jump to one and see it explained."
+
+### Changed
+- The sample guide leads with **Try a fix** as the primary button and mentions F8, and no longer refers to column H, which is off screen on phones.
+- Status messages appear beside the selection's Sum, Average and Count instead of hiding them for five seconds.
+- "Undo restores it" now says "while this page is open", because undo history isn't saved across reloads.
+- On phones up to 480 px the footer drops metric units ("RECALC 20 in 6.20 ms", "DOM 114 of 10M") so both metrics and the ? fit on one line. On phones under 390 px with the diagnostics panel open, the footer keeps only the save state and error count.
+- The functions panel's title is larger than its body text, and the category buttons sit in two even rows of three. Help's section headings are h2s, so headings no longer skip a level.
+- The stress test's Demos entry says "About 60,000 cells and 30,000 formulas", and its note cell (which repeated the guide and widened column H) is gone.
+
+### Fixed
+- The diagnostics panel's fixed formula and **Apply fix** stay docked at the bottom of the panel when it scrolls, so they're always reachable on 320 px phones.
+
 ## [0.3.8] - 2026-10-15
 
 ### Added
