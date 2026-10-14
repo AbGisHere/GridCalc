@@ -94,7 +94,7 @@ On first load the app opens a **sample sheet** with working formulas and one exa
 
 ## Deployment
 
-The app is a standard Next.js project and deploys to **Vercel** with no configuration:
+The app is a standard Next.js project and deploys to **Vercel**. `vercel.json` builds only the `main` branch, so other branches and pull requests get no preview deployment:
 
 1. Push the repository to GitHub.
 2. In Vercel, choose **Add New → Project**, then import the repository and click **Deploy**.
@@ -129,7 +129,8 @@ src/
 tests/                 Vitest unit tests
 docs/                  FUNCTIONS.md (generated), ARCHITECTURE.md
 public/                llms.txt
-.github/               CI workflow, Dependabot
+.github/               CI workflow (runs on pushes to main only), Dependabot
+vercel.json            Deploys main only
 ```
 
 ## Keyboard shortcuts

@@ -5,6 +5,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.19] - 2026-10-14
+
+### Changed
+- CI runs only on pushes to `main`; pull requests no longer trigger it. The PR-only branches in the workflow are gone with the trigger.
+- Vercel builds only `main`: `vercel.json` skips the build for every other branch, so pull requests get no preview deployment.
+
 ## [0.1.18] - 2026-10-14
 
 ### Fixed

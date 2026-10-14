@@ -18,7 +18,7 @@ Repository: https://github.com/AbGisHere/GridCalc
 
 ## Checks
 
-- Every push and PR runs `.github/workflows/ci.yml`: commit-trailer and subject checks, the version/CHANGELOG match, `knip` (no unused files, exports or dependencies), typecheck, tests, production build, the one-`<h1>` check and `npm audit`. Do not merge or release while it is red. There's no need to run these locally before every commit; CI is the gate.
+- Every push to `main` runs `.github/workflows/ci.yml` (pull requests run no checks, and Vercel deploys only `main`): commit-trailer and subject checks, the version/CHANGELOG match, `knip` (no unused files, exports or dependencies), typecheck, tests, production build, the one-`<h1>` check and `npm audit`. Do not merge or release while it is red. There's no need to run these locally before every commit; CI is the gate.
 
 ## Code
 
