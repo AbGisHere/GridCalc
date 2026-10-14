@@ -5,6 +5,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-10-14
+
+### Added
+- `sitemap.xml`, a canonical URL and absolute Open Graph URLs for the production site, https://gridcalc.abgupta.me.
+- Live demo link in the README and `llms.txt`.
+
+### Changed
+- `robots.txt` is generated from `src/app/robots.ts` and now points to the sitemap.
+
 ## [0.1.4] - 2026-10-14
 
 ### Added
@@ -48,7 +57,8 @@ First public release.
 - CSV export neutralizes text that other spreadsheet apps would run as a formula (CSV injection).
 - Sheet data and column widths loaded from `localStorage` are validated before use.
 
-[Unreleased]: https://github.com/AbGisHere/GridCalc/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/AbGisHere/GridCalc/compare/v0.1.5...HEAD
+[0.1.5]: https://github.com/AbGisHere/GridCalc/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/AbGisHere/GridCalc/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/AbGisHere/GridCalc/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/AbGisHere/GridCalc/compare/v0.1.1...v0.1.2

@@ -28,7 +28,7 @@ Repository: https://github.com/AbGisHere/GridCalc
 
 Release checklist, all of which must pass before bumping:
 
-1. **Site files**: exactly one `<h1>` per page, custom 404 and error pages working, favicon (`src/app/icon.svg`), `public/robots.txt`, `public/llms.txt` (links and feature list still accurate), page metadata (title, description, Open Graph, theme colour), and `sitemap` once a production URL exists.
+1. **Site files**: exactly one `<h1>` per page, custom 404 and error pages working, favicon (`src/app/icon.svg`), `src/app/robots.ts`, `src/app/sitemap.ts` (with `SITE_URL` in `src/app/site.ts`), `public/llms.txt` (links and feature list still accurate), page metadata (title, description, Open Graph, theme colour).
 2. **Security review**: look for and fix every vulnerability.
    - `npm audit` is clean (all severities) and dependencies are reasonably current.
    - Security headers in `next.config.ts` (CSP, HSTS, frame-ancestors, nosniff, Referrer-Policy, Permissions-Policy) are still present and still tight; check them against the built app.

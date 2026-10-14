@@ -1,13 +1,16 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { SITE_URL } from './site';
 
 const description = 'A virtualized spreadsheet with a custom formula parser, evaluator and dependency-aware recalculation.';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: 'GridCalc',
   description,
   applicationName: 'GridCalc',
-  openGraph: { title: 'GridCalc', description, type: 'website' },
+  alternates: { canonical: '/' },
+  openGraph: { title: 'GridCalc', description, type: 'website', url: '/' },
   twitter: { card: 'summary', title: 'GridCalc', description },
 };
 

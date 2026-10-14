@@ -11,6 +11,8 @@
 
 A spreadsheet web app built with **TypeScript, Next.js and React**. The formula engine is written from scratch: a hand-written lexer, a Pratt parser, a tree-walking evaluator, and a dependency graph that recalculates only the cells affected by a change. A custom virtualized grid serves a 100,000 × 100 sheet (10 million cells).
 
+**[Live demo →](https://gridcalc.abgupta.me)**
+
 > GDG Tech Wildcard Entry: Spreadsheet Web Application (Frontend / Full-Stack, Advanced)
 
 ## Features
@@ -95,7 +97,7 @@ The app is a standard Next.js project and deploys to **Vercel** with no configur
 
 Or from the command line: `npx vercel`.
 
-**Live demo:** _add your Vercel URL here_
+**Live demo:** https://gridcalc.abgupta.me
 
 ## How it works
 
@@ -109,7 +111,7 @@ See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the full explanation. I
 
 ```
 src/
-  app/                 Next.js App Router entry (layout, page, 404/error pages, global styles)
+  app/                 Next.js App Router entry (layout, page, 404/error pages, robots, sitemap, styles)
   engine/              Framework-free calculation engine
     lexer.ts           Tokenizer with positions and typo diagnostics
     parser.ts          Pratt parser, validation, verified fix suggestions
@@ -122,7 +124,7 @@ src/
   state/               Undo/redo, drag-to-fill, selection, CSV, sample data
 tests/                 Vitest unit tests
 docs/                  FUNCTIONS.md (generated), ARCHITECTURE.md
-public/                robots.txt, llms.txt
+public/                llms.txt
 .github/               CI workflow, Dependabot
 ```
 

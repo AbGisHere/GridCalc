@@ -8,6 +8,7 @@
 
 ## Docs
 
+- [Live app](https://gridcalc.abgupta.me)
 - [README](https://github.com/AbGisHere/GridCalc/blob/main/README.md): features, setup and keyboard shortcuts
 - [Architecture](https://github.com/AbGisHere/GridCalc/blob/main/docs/ARCHITECTURE.md): how the parser, evaluator and dependency graph work
 - [Functions](https://github.com/AbGisHere/GridCalc/blob/main/docs/FUNCTIONS.md): every supported function with its signature
