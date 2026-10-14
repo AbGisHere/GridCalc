@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SpreadsheetEngine } from '../src/engine/engine';
-import { MAX_BACKUP_BYTES, parseBackup, toBackup } from '../src/state/backup';
+import { MAX_BACKUP_BYTES, parseBackup, readCells, toBackup } from '../src/state/backup';
 
 describe('GridCalc backups', () => {
   it('round-trips formulas, text and errors, then rebuilds dependencies on restore', () => {
@@ -41,5 +41,12 @@ describe('GridCalc backups', () => {
   it('rejects invalid JSON and files exceeding the byte limit', () => {
     expect(parseBackup('{')).toBeNull();
     expect(parseBackup(' '.repeat(MAX_BACKUP_BYTES + 1))).toBeNull();
+  });
+
+  it('skips bad cells from browser storage but rejects them in a backup', () => {
+    const stored = { a1: '1', B2: 2, ZZ1: 'outside', 'not a cell': 'x', C3: '=A1' };
+    expect(readCells(stored, false)).toEqual({ A1: '1', C3: '=A1' });
+    expect(readCells(stored, true)).toBeNull();
+    expect(readCells(['A1'], false)).toBeNull();
   });
 });

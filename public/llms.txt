@@ -7,6 +7,7 @@
 - Local .gridcalc.json backups preserve cell contents and formulas; restore validates the file before replacing the sheet. Values-only CSV export is available separately.
 - Circular references are detected and reported as #CIRC! with the cycle path.
 - Light, dark and semi themes; semi keeps the interface dark around a white sheet.
+- A first visit opens on a sample sheet with working formulas and intentional errors to fix.
 - The status bar counts error cells and jumps between them (F8 / Shift+F8).
 - After an edit, the recalculated cells light up in dependency order (a recalculation wave).
 

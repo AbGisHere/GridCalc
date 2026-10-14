@@ -6,24 +6,26 @@ interface DemoGuideProps {
   kind: 'sample' | 'stress';
   onTryFix(): void;
   onLoadStress(): void;
+  onStartBlank(): void;
   onGoTo(address: string): void;
   onDismiss(): void;
 }
 
-export function DemoGuide({ kind, onTryFix, onLoadStress, onGoTo, onDismiss }: DemoGuideProps) {
+export function DemoGuide({ kind, onTryFix, onLoadStress, onStartBlank, onGoTo, onDismiss }: DemoGuideProps) {
   return (
     <section className="demo-guide" aria-label="Demo guide">
       <div className="guide-content">
         <p>
           {kind === 'sample'
-            ? 'The sample errors are intentional. Try a fix, or load 10k rows (replaces this sheet; Undo restores it).'
+            ? 'This sample is a live sheet, and the red cells in column H are intentional errors. Try a fix, load 10k rows or start blank; Undo restores the sample.'
             : 'Compare recalculation: edit B2 to update the long dependency chain, then B10001 to update only its end. Watch Recalc below.'}
         </p>
         <div className="guide-actions">
           {kind === 'sample' ? (
             <>
-              <button className="guide-action" onClick={onTryFix}>Try a formula fix</button>
+              <button className="guide-action" onClick={onTryFix}>Try a fix</button>
               <button className="guide-action" onClick={onLoadStress}>Load 10k rows</button>
+              <button className="guide-action" onClick={onStartBlank}>Start blank</button>
             </>
           ) : (
             <>

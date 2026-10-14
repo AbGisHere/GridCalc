@@ -5,6 +5,27 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.8] - 2026-10-15
+
+### Added
+- A first visit opens on the sample sheet with its guide, so the formula engine and its error diagnostics are visible straight away. The guide's new **Start blank** button empties the sheet (undoable); later visits restore the saved sheet as before.
+- **Shift+F3** opens or closes the function list, as in Excel; Help and the ƒx button's tooltip list it.
+- Roadmap: quoting bare comparison criteria such as `=SUMIF(A2:A10, >10)`, Excel-style Cmd/Ctrl+A (data region first, then the whole sheet), and copying a selection as an image.
+
+### Changed
+- The function list uses one compact row per function that inserts it, with category buttons that jump to each group, arrow-key movement inside a single Tab stop, and the focused or hovered function's example at the bottom.
+- The Sheet menu groups file actions, then column width, then **Clear N cells** on its own in the error colour. On phones, the theme and help move into their own **⋯** menu, menu chevrons drop below 390 px so the toolbar fits on one row down to 320 px, and the save state reads "Saved" so the footer keeps to two lines.
+- Status messages and the Recalc metric share one timing format, Recalc pulses with each recalculation (not with reduced motion), and it reads "none yet" on an empty sheet instead of "0 cells".
+- The diagnostics panel marks the culprit once, with the caret line, and labels the one-click repair **Fixed formula**. Every sheet replacement's description now says "Undo restores it".
+
+### Fixed
+- The save state is no longer a live region, so screen readers stop hearing "Saved in this browser" after every edit; only a failed save is announced.
+- Accepting an autocomplete suggestion and typing straight on could insert the next characters before the caret moved; the caret now moves before the next keystroke is handled.
+- The sheet's keyboard focus ring shows on all four sides; the sticky headers covered its top and left edges.
+
+### Removed
+- Unused import and export icons, and the duplicated cell validation for browser storage and backups (now one `readCells` helper).
+
 ## [0.3.7] - 2026-10-15
 
 ### Added

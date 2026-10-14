@@ -34,15 +34,22 @@ interface StatusBarProps {
 const fmt = (n: number) => n.toLocaleString('en-US');
 const compact = new Intl.NumberFormat('en-US', { notation: 'compact' });
 
+/** One format for every recalculation time, so the status message and the Recalc metric always agree. */
+export const formatMs = (ms: number) => `${ms.toFixed(ms < 10 ? 2 : 0)} ms`;
+
 export function StatusBar({ saveState, onExport, onBackup, stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message, onUndo, onHold }: StatusBarProps) {
   return (
     <footer className="status-bar">
       <p className="sr-only" role="status">
         {message}
       </p>
+      {/* Only a failed save is announced; saving after every edit would be noise. */}
+      <p className="sr-only" role="alert">
+        {saveState === 'failed' && 'Not saved. Browser storage is unavailable or full.'}
+      </p>
       <div className={`save-state ${saveState}`}>
-        <span role="status">
-          {saveState === 'failed' ? 'Not saved' : saveState === 'saving' ? 'Saving…' : 'Saved in this browser'}
+        <span>
+          {saveState === 'failed' ? 'Not saved' : saveState === 'saving' ? 'Saving…' : <>Saved<span className="save-where"> in this browser</span></>}
           {saveState === 'failed' && <span className="save-detail"> — Browser storage is unavailable or full. Download a backup to keep cell contents and formulas.</span>}
         </span>
         {saveState === 'failed' && (
@@ -101,14 +108,19 @@ export function StatusBar({ saveState, onExport, onBackup, stats, recalc, render
         )}
       </div>
       <div className="status-right" role="group" aria-label="Engine">
-        {recalc && (
-          <span className="metric" title="Only cells downstream of an edit are re-evaluated">
-            <span className="metric-label">Recalc</span>
-            <b>{fmt(recalc.evaluated)}</b>
-            <span className="metric-unit"> cell{recalc.evaluated === 1 ? '' : 's'}</span> in <b>{recalc.ms.toFixed(recalc.ms < 10 ? 2 : 0)} ms</b>
-            {recalc.cycles > 0 && <span className="warn"> · {recalc.cycles} circular</span>}
-          </span>
-        )}
+        {/* Keyed by the recalculation, so each new one replays the pulse alongside the wave on the grid. */}
+        <span className="metric metric-recalc" key={recalc ? `${recalc.evaluated}:${recalc.ms}` : ''} title="Only cells downstream of an edit are re-evaluated">
+          <span className="metric-label">Recalc</span>
+          {recalc && (recalc.evaluated > 0 || usedCells > 0) ? (
+            <>
+              <b>{fmt(recalc.evaluated)}</b>
+              <span className="metric-unit"> cell{recalc.evaluated === 1 ? '' : 's'}</span> in <b>{formatMs(recalc.ms)}</b>
+              {recalc.cycles > 0 && <span className="warn"> · {recalc.cycles} circular</span>}
+            </>
+          ) : (
+            <span>none yet</span>
+          )}
+        </span>
         <span className="metric" title="Virtualization: only visible cells exist in the DOM">
           <span className="metric-label">DOM cells</span>
           <b>{fmt(rendered)}</b> of <span className="total-full">{fmt(totalCells)}</span>

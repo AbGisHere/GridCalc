@@ -14,6 +14,7 @@ const SHORTCUTS: [string, string][] = [
   ['Click cells while typing a formula', 'Insert references'],
   ['F8 / Shift + F8', 'Next / previous error'],
   ['F9', 'Recalculate everything'],
+  ['Shift + F3', 'Open or close the function list'],
 ];
 
 export function HelpContent() {

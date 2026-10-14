@@ -86,6 +86,7 @@ export function DiagnosticsPanel({ view, onApplyFix, onGoTo, onDismiss }: Diagno
 
         {view.fix && (
           <div className="diag-fix">
+            <span className="diag-label">Fixed formula</span>
             <code>{view.fix}</code>
             <button onClick={() => onApplyFix(view.fix!)}>Apply fix</button>
           </div>

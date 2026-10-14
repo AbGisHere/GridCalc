@@ -73,7 +73,7 @@ export function FormulaBar(props: FormulaBarProps) {
       />
       <button
         className={'fx-button' + (props.functionsOpen ? ' on' : '')}
-        title="Browse functions"
+        title="Browse functions (Shift+F3)"
         aria-label="Browse functions"
         aria-expanded={props.functionsOpen}
         onClick={props.onToggleFunctions}

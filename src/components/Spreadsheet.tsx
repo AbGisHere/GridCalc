@@ -4,7 +4,6 @@ import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useReducer, us
 import {
   cellKey,
   colToLetters,
-  inBounds,
   keyCol,
   keyRow,
   LAST_CELL_A1,
@@ -24,7 +23,7 @@ import { explainRuntimeError, parseFormula } from '@/engine/parser';
 import { normalizeFormula, shiftFormula } from '@/engine/references';
 import { CellError, displayValue } from '@/engine/values';
 import { parseCSV, parseTSV, toCSV } from '@/state/csv';
-import { MAX_BACKUP_BYTES, parseBackup, toBackup } from '@/state/backup';
+import { MAX_BACKUP_BYTES, parseBackup, readCells, toBackup } from '@/state/backup';
 import { buildFill, FillLimitError } from '@/state/fill';
 import { History } from '@/state/history';
 import { SAMPLE_SHEET, stressSheet } from '@/state/samples';
@@ -42,22 +41,10 @@ import { DemoGuide } from './DemoGuide';
 import { HelpContent } from './HelpContent';
 import { clampColumnWidth, defaultColumnWidths, fittedColumnWidths, ROW_HEIGHT } from './geometry';
 import { Grid, type DragMode, type GridHandle } from './Grid';
-import { StatusBar, type SelectionStats } from './StatusBar';
+import { formatMs, StatusBar, type SelectionStats } from './StatusBar';
 
 const STORAGE_KEY = 'gridcalc:sheet:v1';
 const WIDTHS_KEY = 'gridcalc:widths:v1';
-
-/** Saved sheets are untrusted input: keep only A1-addressed string cells inside the sheet bounds. */
-function parseSavedSheet(json: string): Record<string, string> | null {
-  const raw: unknown = JSON.parse(json);
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-  const data: Record<string, string> = {};
-  for (const [addr, value] of Object.entries(raw)) {
-    const ref = parseA1(addr);
-    if (ref && inBounds(ref.row, ref.col) && typeof value === 'string') data[toA1(ref.row, ref.col)] = value;
-  }
-  return data;
-}
 const MAX_CLIPBOARD_CELLS = 250_000;
 const MAX_IMPORT_MB = 20;
 
@@ -81,7 +68,7 @@ interface EditState {
 
 /** What an edit cost, for its status-bar message: "3 formulas recalculated in 0.2 ms". */
 const recalcSummary = (s: RecalcStats) =>
-  `${s.evaluated.toLocaleString()} formula${s.evaluated === 1 ? '' : 's'} recalculated in ${s.ms.toFixed(1)} ms`;
+  `${s.evaluated.toLocaleString()} formula${s.evaluated === 1 ? '' : 's'} recalculated in ${formatMs(s.ms)}`;
 
 /** Status-bar message; `undo` offers to reverse the action that produced it (replacing the whole sheet). */
 interface Toast {
@@ -179,9 +166,12 @@ export default function Spreadsheet() {
   useEffect(() => {
     let data: Record<string, string> | null = null;
     let widths: string | null = null;
+    let firstVisit = false;
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) data = parseSavedSheet(saved);
+      // A first visit opens on the sample, so the engine and its error diagnostics are visible straight away.
+      if (saved) data = readCells(JSON.parse(saved), false);
+      else firstVisit = true;
       widths = localStorage.getItem(WIDTHS_KEY);
       if (widths) {
         const w: unknown = JSON.parse(widths);
@@ -190,7 +180,8 @@ export default function Spreadsheet() {
     } catch {
       data = null;
     }
-    engine.load(data ?? {});
+    engine.load(firstVisit ? SAMPLE_SHEET : (data ?? {}));
+    if (firstVisit) setDemoGuide('sample');
     if (!widths) setColWidths(contentWidths(engine));
     setLoaded(true);
     gridRef.current?.focus();
@@ -294,7 +285,7 @@ export default function Spreadsheet() {
     gridRef.current?.scrollIntoView({ row: 0, col: 0 });
     gridRef.current?.focus();
     const s = engine.lastStats;
-    const text = !engine.cellCount ? 'Sheet cleared' : s ? `${label}: ${engine.cellCount.toLocaleString()} cells, ${s.evaluated.toLocaleString()} formulas evaluated in ${s.ms.toFixed(0)} ms` : label;
+    const text = !engine.cellCount ? 'Sheet cleared' : s ? `${label}: ${engine.cellCount.toLocaleString()} cells, ${s.evaluated.toLocaleString()} formulas evaluated in ${formatMs(s.ms)}` : label;
     // No confirmation step: replacing the sheet is one undoable edit, and the message offers the undo right there.
     setToast({ text, undo: hadCells && replaced });
   };
@@ -302,13 +293,10 @@ export default function Spreadsheet() {
   // ------------------------------------------------------------------ editing
   const activeInput = () => (edit?.target === 'bar' ? barInputRef.current : cellInputRef.current);
 
+  /** Moves focus and the caret once the edit that called it has rendered, before the next keystroke is handled. */
+  const pendingCaret = useRef<{ pos: number; target: 'cell' | 'bar' } | null>(null);
   const focusInputAt = (pos: number, target: 'cell' | 'bar' = edit?.target ?? 'cell') => {
-    requestAnimationFrame(() => {
-      const el = target === 'bar' ? barInputRef.current : cellInputRef.current;
-      if (!el) return;
-      el.focus();
-      el.setSelectionRange(pos, pos);
-    });
+    pendingCaret.current = { pos, target };
   };
 
   const startEdit = (at: CellPos, initial: string | undefined, mode: EditState['mode'], target: EditState['target'] = 'cell') => {
@@ -355,6 +343,15 @@ export default function Spreadsheet() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editKey]);
+
+  useLayoutEffect(() => {
+    const p = pendingCaret.current;
+    if (!p) return;
+    pendingCaret.current = null;
+    const el = p.target === 'bar' ? barInputRef.current : cellInputRef.current;
+    el?.focus();
+    el?.setSelectionRange(p.pos, p.pos);
+  });
 
   const assist = useMemo(() => (edit && !assistOff ? assistAt(edit.value, caret) : null), [edit, assistOff, caret]);
   const assistSel = Math.min(assistIdx, Math.max(0, (assist?.suggestions.length ?? 0) - 1));
@@ -759,8 +756,22 @@ export default function Spreadsheet() {
     if (clipped) setToast((t) => ({ text: `Imported ${file.name}. Cells outside A1:${LAST_CELL_A1} were left out.`, undo: t?.undo }));
   };
 
-  /** F6 / Shift+F6 cycle focus between the toolbar, the name box and the sheet, as in desktop spreadsheets. */
+  const closeFunctions = () => {
+    setShowFns(false);
+    gridRef.current?.focus();
+  };
+
+  /**
+   * F6 / Shift+F6 cycle focus between the toolbar, the name box and the sheet, as in desktop spreadsheets;
+   * Shift+F3 opens or closes the function list, as in Excel.
+   */
   const onAppKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'F3' && e.shiftKey) {
+      e.preventDefault();
+      if (showFns) closeFunctions();
+      else setShowFns(true);
+      return;
+    }
     if (e.key !== 'F6') return;
     e.preventDefault();
     const regions = [toolbarRef.current, barWrapRef.current, workspaceRef.current];
@@ -885,13 +896,13 @@ export default function Spreadsheet() {
     </>
   );
 
-  const sheetActions: { label: string; detail: string; run(): void; disabled?: boolean }[] = [
+  const sheetActions: { label: string; detail: string; run(): void }[] = [
     { label: 'Download backup', detail: 'Keep cell contents and formulas in a GridCalc file', run: exportBackup },
     { label: 'Restore backup', detail: 'Replace the sheet with a GridCalc backup; Undo restores it', run: () => backupFileRef.current?.click() },
     { label: 'Import CSV', detail: 'Replace the sheet with a .csv file', run: () => fileRef.current?.click() },
     { label: 'Export values as CSV', detail: 'Download calculated values; formulas are not included', run: exportCSV },
-    { label: 'Clear', detail: 'Empty the sheet; Undo brings it back', run: () => replaceSheet({}, 'Clear sheet'), disabled: !engine.cellCount },
   ];
+  const clearSheet = () => replaceSheet({}, 'Clear sheet');
 
   // ------------------------------------------------------------------ render
   return (
@@ -972,7 +983,6 @@ export default function Spreadsheet() {
                   <button
                     key={a.label}
                     className="menu-item"
-                    disabled={a.disabled}
                     onClick={() => {
                       close();
                       a.run();
@@ -988,11 +998,17 @@ export default function Spreadsheet() {
                   width={colWidths[active.col]}
                   onResize={(width) => setColWidths((ws) => ws.map((w, c) => c === active.col ? width : w))}
                 />
-                <div className="narrow-only"><ThemePicker /></div>
-                <details className="help-details narrow-only">
-                  <summary>Help & shortcuts</summary>
-                  <HelpContent />
-                </details>
+                <button
+                  className="menu-item danger"
+                  disabled={!engine.cellCount}
+                  onClick={() => {
+                    close();
+                    clearSheet();
+                  }}
+                >
+                  <b>{engine.cellCount ? `Clear ${engine.cellCount.toLocaleString()} cell${engine.cellCount === 1 ? '' : 's'}` : 'Clear sheet'}</b>
+                  <span>Empty the sheet; Undo restores it</span>
+                </button>
               </>
             )}
           </ToolMenu>
@@ -1037,6 +1053,29 @@ export default function Spreadsheet() {
             {() => <HelpContent />}
           </ToolMenu>
         </div>
+        {/* Phones keep the toolbar to one row: theme and help share a menu of their own. */}
+        <div className="tool-group right narrow-only">
+          <ToolMenu
+            className="end"
+            title="Theme and help"
+            label={
+              <>
+                <Icon name="more" />
+                <span className="sr-only">Theme and help</span>
+              </>
+            }
+          >
+            {() => (
+              <>
+                <ThemePicker />
+                <details className="help-details">
+                  <summary>Help & shortcuts</summary>
+                  <HelpContent />
+                </details>
+              </>
+            )}
+          </ToolMenu>
+        </div>
       </header>
 
       <section className="bar-wrap" ref={barWrapRef} aria-label="Formula bar">
@@ -1067,6 +1106,7 @@ export default function Spreadsheet() {
               goTo('H2');
             }}
             onLoadStress={() => replaceSheet(stressSheet(), '10k-row stress test', 'stress')}
+            onStartBlank={clearSheet}
             onGoTo={goTo}
             onDismiss={() => {
               setDemoGuide(null);
@@ -1136,10 +1176,7 @@ export default function Spreadsheet() {
           <FunctionsPanel
             address={activeAddress}
             onInsert={insertFunction}
-            onClose={() => {
-              setShowFns(false);
-              gridRef.current?.focus();
-            }}
+            onClose={closeFunctions}
           />
         )}
       </main>

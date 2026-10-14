@@ -19,12 +19,21 @@ export function parseBackup(text: string): Record<string, string> | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const backup = raw as Record<string, unknown>;
   if (backup.format !== 'gridcalc' || backup.version !== 1) return null;
-  if (!backup.cells || typeof backup.cells !== 'object' || Array.isArray(backup.cells)) return null;
+  return readCells(backup.cells, true);
+}
+
+/**
+ * Untrusted cell maps (backups, browser storage): A1-addressed string cells inside the sheet. `strict` rejects the
+ * whole map on any bad cell, as a backup must; otherwise bad cells are skipped and addresses normalized.
+ */
+export function readCells(raw: unknown, strict: boolean): Record<string, string> | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const cells: Record<string, string> = {};
-  for (const [address, value] of Object.entries(backup.cells)) {
+  for (const [address, value] of Object.entries(raw)) {
     const ref = parseA1(address);
-    if (!ref || !inBounds(ref.row, ref.col) || toA1(ref.row, ref.col) !== address || typeof value !== 'string') return null;
-    cells[address] = value;
+    const a1 = ref && inBounds(ref.row, ref.col) && typeof value === 'string' ? toA1(ref.row, ref.col) : null;
+    if (a1 && (!strict || a1 === address)) cells[a1] = value as string;
+    else if (strict) return null;
   }
   return cells;
 }
