@@ -359,7 +359,7 @@ export function Grid(props: GridProps) {
           {vlines}
           {cells}
           {refMarks.map((m, i) => (
-            <div key={i} className="ref-mark" style={{ ...rect(m.range), borderColor: m.color, background: `${m.color}14` }} />
+            <div key={i} className="ref-mark" style={{ ...rect(m.range), color: m.color }} />
           ))}
           {copyRange && <div className="copy-mark" style={rect(copyRange)} />}
           {isMulti && <div className="sel-range" style={selRect} />}

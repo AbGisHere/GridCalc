@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.15] - 2026-10-14
+
+### Fixed
+- Cell references in the formula bar now have AA contrast in both themes. The eight reference colours are CSS tokens (`--ref-0` to `--ref-7`) with their own light and dark values, each at least 4.5:1. Before, one set was used for both themes and every colour failed in at least one of them (yellow was 2.9:1 in light, purple 3.3:1 in dark).
+- `TRUE`, `FALSE` and error values in a formula use the theme's warning colour instead of a fixed orange that was 3.6:1 in dark mode.
+- **Apply fix** and a fully selected column or row header use the page background for their text instead of white, which was 2.3:1 on the dark theme's green.
+
+### Changed
+- Selected text uses the accent green instead of the browser's default blue.
+
 ## [0.1.14] - 2026-10-14
 
 ### Changed

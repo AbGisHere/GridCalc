@@ -2,8 +2,8 @@ import { inBounds, normalizeRange, parseA1, type RangeBounds } from '@/engine/ad
 import { FUNCTIONS, getFunction, type FnDef } from '@/engine/functions';
 import { tokenize, type Token } from '@/engine/lexer';
 
-/** Colours shared by the formula bar and the grid so each reference is visibly linked to its cells. */
-const REF_COLORS = ['#2563eb', '#dc2626', '#16a34a', '#9333ea', '#ea580c', '#0891b2', '#db2777', '#ca8a04'];
+/** Colours shared by the formula bar and the grid so each reference is visibly linked to its cells; `--ref-0`…`--ref-7` are set per theme. */
+const REF_COLORS = 8;
 
 export interface RefMark {
   start: number;
@@ -43,7 +43,7 @@ export function formulaRefs(text: string): RefMark[] {
     }
     const range = normalizeRange(a, b);
     const id = `${range.r1},${range.c1},${range.r2},${range.c2}`;
-    if (!colorOf.has(id)) colorOf.set(id, REF_COLORS[colorOf.size % REF_COLORS.length]);
+    if (!colorOf.has(id)) colorOf.set(id, `var(--ref-${colorOf.size % REF_COLORS})`);
     marks.push({ start: t.start, end, range, color: colorOf.get(id)! });
   }
   return marks;

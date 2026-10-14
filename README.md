@@ -21,7 +21,7 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 - 10,000,000 addressable cells (100,000 rows × 100 columns) with custom virtualization. Only about 600 cells are mounted at any time, and scrolling runs at 60 fps.
 - Click, drag or Shift+Arrow selection, plus whole-row, whole-column and select-all from the headers.
 - Keyboard navigation: arrows, Tab, Enter, Home, Ctrl+Home/End, Page Up/Down, and Ctrl+Arrow to jump to the edge of the data.
-- In-cell editing and a **formula bar** with syntax highlighting. Each colour-coded reference matches the border drawn around its cells in the grid.
+- In-cell editing and a **formula bar** with syntax highlighting. Each colour-coded reference matches the border drawn around its cells in the grid, with a separate set of reference colours for the light and dark themes so the text stays readable (at least 4.5:1) in both.
 - **Click cells while typing a formula** to insert references. Drag to insert a range.
 - **Function autocomplete** and a signature hint that highlights the argument you are currently typing.
 - **Drag-to-fill**: formulas are copied with relative references shifted, numeric series are continued, and numbered text counts up. Ctrl+D / Ctrl+R fill down / right.
