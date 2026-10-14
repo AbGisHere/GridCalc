@@ -844,7 +844,7 @@ export default function Spreadsheet() {
 
   const sheetActions: { label: string; detail: string; run(): void; disabled?: boolean }[] = [
     { label: 'Import CSV', detail: 'Replace the sheet with a .csv file', run: () => fileRef.current?.click() },
-    { label: 'Export CSV', detail: 'Download the sheet as a .csv file', run: exportCSV },
+    { label: 'Export values as CSV', detail: 'Download calculated values; formulas are not included', run: exportCSV },
     { label: 'Clear', detail: 'Empty the sheet; Undo brings it back', run: () => replaceSheet({}, 'Clear sheet'), disabled: !engine.cellCount },
   ];
 

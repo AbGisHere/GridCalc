@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-10-15
+
+### Changed
+- CSV export is labeled as exporting calculated values and explicitly says that formulas are not included, including the recovery action when browser saving fails.
+
 ## [0.2.6] - 2026-10-15
 
 ### Changed

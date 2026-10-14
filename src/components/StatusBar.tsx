@@ -40,10 +40,10 @@ export function StatusBar({ saveState, onExport, stats, recalc, rendered, totalC
         {message}
       </p>
       <div className={`save-state ${saveState}`}>
-        <span role="status" title={saveState === 'failed' ? 'Browser storage is full or blocked. Export a CSV to keep this sheet.' : undefined}>
+        <span role="status" title={saveState === 'failed' ? 'Browser storage is full or blocked. Export calculated values as CSV; formulas are not included.' : undefined}>
           {saveState === 'failed' ? 'Not saved' : saveState === 'saving' ? 'Saving…' : 'Saved'}
         </span>
-        {saveState === 'failed' && <button className="status-undo" onClick={onExport}>Export CSV</button>}
+        {saveState === 'failed' && <button className="status-undo" onClick={onExport}>Export values as CSV</button>}
       </div>
       {errors > 0 && (
         <button className="err-nav" onClick={onNextError} title="Select the next error cell (F8, or Shift+F8 for the previous one)">
