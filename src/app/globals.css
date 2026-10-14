@@ -787,6 +787,8 @@ button {
 .cell {
   position: absolute;
   padding: 0 6px;
+  /* Arabic or Hebrew text reads right to left and starts at the right edge, as in other spreadsheets. */
+  unicode-bidi: plaintext;
   line-height: 26px;
   white-space: nowrap;
   overflow: hidden;

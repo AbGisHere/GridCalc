@@ -5,6 +5,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.22] - 2026-10-14
+
+### Fixed
+- Screen readers now announce the status bar's messages, such as "Sheet cleared", import results and "Undid: …", through a live region. Before, they appeared on screen only.
+- A message no longer disappears while the pointer is over it or the keyboard focus is on its **Undo** button, so the button can't vanish just as you reach it. After that **Undo**, focus returns to the sheet instead of being lost.
+- A drag on the selection grip, fill handle, headers or a column edge now follows only the finger or pointer that started it. A second finger landing mid-drag used to take it over; now it's ignored.
+
+### Changed
+- A status message too long for the bar, such as one with a long file name, shows in full as a tooltip.
+- Arabic and Hebrew text in a cell starts at the cell's right edge and reads right to left, as in other spreadsheets.
+
 ## [0.1.21] - 2026-10-14
 
 ### Changed

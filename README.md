@@ -30,7 +30,7 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 - **Three themes**: Light, Dark, and **Semi**, a dark interface (column letters and row numbers included) around white cells, so the sheet looks the way it would print. The app follows the system's light or dark setting until you pick one in the **Theme** menu (in the **Sheet** menu on a phone); the choice is saved in the browser and applied before the first paint, so there is no flash.
 - A status bar that shows the engine at work: how many cells the last edit recalculated and how long it took, and how many cells are in the DOM out of 10,000,000.
 - Custom 404 and error pages styled like the app's own error diagnostics.
-- **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar and sheet, the active cell and its value are announced, autocomplete is a proper combobox, and every control shows a visible focus ring.
+- **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar and sheet, the active cell and its value are announced, status messages such as "Sheet cleared" are read out and stay up while you hover or focus them, autocomplete is a proper combobox, and every control shows a visible focus ring.
 
 **Formula engine**
 - **96 functions** including `SUM`, `IF`, `VLOOKUP`, `XLOOKUP`, `INDEX`/`MATCH`, `SUMIFS`, `COUNTIFS`, `TEXTJOIN` and `TEXT`. See [docs/FUNCTIONS.md](docs/FUNCTIONS.md) for the full list.

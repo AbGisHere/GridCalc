@@ -131,6 +131,7 @@ export default function Spreadsheet() {
   const [copyRange, setCopyRange] = useState<RangeBounds | null>(null);
   const [rendered, setRendered] = useState(0);
   const [toast, setToast] = useState<Toast>();
+  const [heldToast, setHeldToast] = useState<Toast>();
   const say = (text: string) => setToast({ text });
   const [loaded, setLoaded] = useState(false);
 
@@ -196,10 +197,10 @@ export default function Spreadsheet() {
   }, [colWidths]);
 
   useEffect(() => {
-    if (!toast) return;
+    if (!toast || toast === heldToast) return;
     const t = setTimeout(() => setToast(undefined), toast.undo ? 8000 : 3500);
     return () => clearTimeout(t);
-  }, [toast]);
+  }, [toast, heldToast]);
 
   useEffect(() => setDiagHidden(false), [active.row, active.col]);
 
@@ -1040,7 +1041,15 @@ export default function Spreadsheet() {
         errors={errorKeys.length}
         onNextError={() => jumpToError(false)}
         message={toast?.text}
-        onUndo={toast?.undo ? undo : undefined}
+        onUndo={
+          toast?.undo
+            ? () => {
+                undo();
+                gridRef.current?.focus();
+              }
+            : undefined
+        }
+        onHold={(held) => setHeldToast(held ? toast : undefined)}
       />
     </div>
   );

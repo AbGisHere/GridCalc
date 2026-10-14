@@ -151,7 +151,7 @@ export function Grid(props: GridProps) {
         lastY = e.clientY;
         onMove(posFromClient(e.clientX, e.clientY));
       };
-      trackPointer(move, () => {
+      trackPointer(start, move, () => {
         cancelAnimationFrame(raf);
         onEnd?.();
       });
@@ -227,7 +227,7 @@ export function Grid(props: GridProps) {
     e.preventDefault();
     const startX = e.clientX;
     const startW = colWidths[col];
-    trackPointer((ev) => live.current.onColResize(col, Math.max(MIN_COL_WIDTH, startW + ev.clientX - startX)));
+    trackPointer(e, (ev) => live.current.onColResize(col, Math.max(MIN_COL_WIDTH, startW + ev.clientX - startX)));
   };
 
   // ----------------------------------------------------------- render helpers
@@ -385,17 +385,27 @@ export function Grid(props: GridProps) {
 /** Keeps a mouse press on a handle from also starting a selection in the cells or headers underneath. */
 const stopMouse = (e: React.MouseEvent) => e.stopPropagation();
 
-/** Follows one pointer until it is released or cancelled, or the window loses focus (Alt+Tab mid-drag). */
-function trackPointer(onMove: (e: PointerEvent) => void, onEnd?: () => void) {
+/**
+ * Follows the pointer that started a drag until it is released or cancelled, or the window loses focus (Alt+Tab
+ * mid-drag). Other pointers, such as a second finger, neither move nor end the drag.
+ */
+function trackPointer(start: React.PointerEvent | React.MouseEvent, onMove: (e: PointerEvent) => void, onEnd?: () => void) {
+  const mine = (e: PointerEvent) => ('pointerId' in start ? e.pointerId === start.pointerId : e.pointerType === 'mouse');
+  const move = (e: PointerEvent) => {
+    if (mine(e)) onMove(e);
+  };
+  const release = (e: PointerEvent) => {
+    if (mine(e)) end();
+  };
   const end = () => {
-    window.removeEventListener('pointermove', onMove);
-    window.removeEventListener('pointerup', end);
-    window.removeEventListener('pointercancel', end);
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', release);
+    window.removeEventListener('pointercancel', release);
     window.removeEventListener('blur', end);
     onEnd?.();
   };
-  window.addEventListener('pointermove', onMove);
-  window.addEventListener('pointerup', end);
-  window.addEventListener('pointercancel', end);
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', release);
+  window.addEventListener('pointercancel', release);
   window.addEventListener('blur', end);
 }
