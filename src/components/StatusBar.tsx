@@ -39,7 +39,7 @@ export function StatusBar({ saveState, onExport, stats, recalc, rendered, totalC
       <p className="sr-only" role="status">
         {message}
       </p>
-      <div className={`save-state${saveState === 'failed' ? ' failed' : ''}`}>
+      <div className={`save-state ${saveState}`}>
         <span role="status" title={saveState === 'failed' ? 'Browser storage is full or blocked. Export a CSV to keep this sheet.' : undefined}>
           {saveState === 'failed' ? 'Not saved' : saveState === 'saving' ? 'Saving…' : 'Saved'}
         </span>

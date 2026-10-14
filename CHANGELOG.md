@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-10-15
+
+### Changed
+- Light, dark and semi themes use softly green-tinted toolbars and headers, distinct selected headers, blue engine labels, and semantic colors for saving, saved and failed states. Error cells have a tinted background, and formula error tokens match the red diagnostic treatment.
+
 ## [0.2.3] - 2026-10-15
 
 ### Fixed
