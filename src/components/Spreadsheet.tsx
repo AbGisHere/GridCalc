@@ -37,6 +37,7 @@ import { Icon } from './Icon';
 import { ThemePicker } from './ThemePicker';
 import { ToolMenu } from './ToolMenu';
 import { ColumnWidthControl } from './ColumnWidthControl';
+import { DemoGuide } from './DemoGuide';
 import { defaultColumnWidths, fittedColumnWidths, ROW_HEIGHT } from './geometry';
 import { Grid, type DragMode, type GridHandle } from './Grid';
 import { StatusBar, type SelectionStats } from './StatusBar';
@@ -94,8 +95,8 @@ const contentWidths = (engine: SpreadsheetEngine) =>
   );
 
 const DEMOS = [
-  { label: 'Sample sheet', detail: 'Working formulas, then one of each error to fix', data: () => SAMPLE_SHEET },
-  { label: '10k-row stress test', detail: '60,000 cells and 30,000 formulas', data: stressSheet },
+  { label: 'Sample sheet', detail: 'Working formulas, then one of each error to fix', data: () => SAMPLE_SHEET, guide: 'sample' as const },
+  { label: '10k-row stress test', detail: '60,000 cells and 30,000 formulas', data: stressSheet, guide: 'stress' as const },
 ];
 
 const SHORTCUTS: [string, string][] = [
@@ -133,6 +134,7 @@ export default function Spreadsheet() {
   const [assistOff, setAssistOff] = useState(false);
   const [colWidths, setColWidths] = useState(defaultColumnWidths);
   const [showFns, setShowFns] = useState(false);
+  const [demoGuide, setDemoGuide] = useState<'sample' | 'stress' | null>(null);
   const [diagHidden, setDiagHidden] = useState(false);
   const [copyRange, setCopyRange] = useState<RangeBounds | null>(null);
   const [rendered, setRendered] = useState(0);
@@ -191,6 +193,7 @@ export default function Spreadsheet() {
       data = null;
     }
     engine.load(data ?? SAMPLE_SHEET);
+    if (!data) setDemoGuide('sample');
     if (!widths) setColWidths(contentWidths(engine));
     setLoaded(true);
     gridRef.current?.focus();
@@ -251,6 +254,7 @@ export default function Spreadsheet() {
   const undo = () => {
     const r = history.undo();
     if (!r) return;
+    setDemoGuide(null);
     setEdit(null);
     const s = engine.setCells(r.edits);
     setSel(r.entry.selection);
@@ -262,6 +266,7 @@ export default function Spreadsheet() {
   const redo = () => {
     const r = history.redo();
     if (!r) return;
+    setDemoGuide(null);
     setEdit(null);
     const s = engine.setCells(r.edits);
     setSel(r.entry.selection);
@@ -269,7 +274,7 @@ export default function Spreadsheet() {
     bumpHistory();
   };
 
-  const replaceSheet = (data: Record<string, string>, label: string) => {
+  const replaceSheet = (data: Record<string, string>, label: string, guide: 'sample' | 'stress' | null = null) => {
     const edits: CellEdit[] = [];
     const current = engine.toJSON();
     const hadCells = engine.cellCount > 0;
@@ -284,6 +289,7 @@ export default function Spreadsheet() {
       if (p) edits.push({ row: p.row, col: p.col, raw });
     }
     setEdit(null);
+    setDemoGuide(guide);
     const replaced = apply(edits, label);
     // A new sheet gets a fresh layout: columns sized to their contents, so no value is cut off.
     setColWidths(contentWidths(engine));
@@ -899,7 +905,7 @@ export default function Spreadsheet() {
                   className="menu-item"
                   onClick={() => {
                     close();
-                    replaceSheet(d.data(), d.label);
+                    replaceSheet(d.data(), d.label, d.guide);
                   }}
                 >
                   <b>{d.label}</b>
@@ -1009,6 +1015,21 @@ export default function Spreadsheet() {
           functionsOpen={showFns}
           onToggleFunctions={() => setShowFns((v) => !v)}
         />
+        {demoGuide && !edit && (
+          <DemoGuide
+            kind={demoGuide}
+            onTryFix={() => {
+              setDemoGuide(null);
+              goTo('H2');
+            }}
+            onLoadStress={() => replaceSheet(stressSheet(), '10k-row stress test', 'stress')}
+            onGoTo={goTo}
+            onDismiss={() => {
+              setDemoGuide(null);
+              gridRef.current?.focus();
+            }}
+          />
+        )}
         {edit && (
           <div className="edit-actions" role="group" aria-label="Finish editing">
             <span>Editing <b>{toA1(edit.row, edit.col)}</b></span>

@@ -502,6 +502,54 @@ button {
 }
 
 /* ------------------------------------------------------------------ formula bar */
+.demo-guide {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.guide-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.guide-content p {
+  flex: 1 1 30ch;
+  margin: 0;
+  max-width: 70ch;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.guide-action {
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--accent-strong);
+  cursor: pointer;
+}
+
+.guide-action:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .bar-wrap {
   position: relative;
   z-index: 20;
