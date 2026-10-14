@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.10] - 2026-10-15
+
+### Added
+- Help & shortcuts includes touch editing, selection and fill guidance alongside the keyboard reference. It stays available inside Sheet on narrow and zoomed layouts.
+
 ## [0.2.9] - 2026-10-15
 
 ### Fixed

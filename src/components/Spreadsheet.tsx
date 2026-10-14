@@ -38,6 +38,7 @@ import { ThemePicker } from './ThemePicker';
 import { ToolMenu } from './ToolMenu';
 import { ColumnWidthControl } from './ColumnWidthControl';
 import { DemoGuide } from './DemoGuide';
+import { HelpContent } from './HelpContent';
 import { defaultColumnWidths, fittedColumnWidths, ROW_HEIGHT } from './geometry';
 import { Grid, type DragMode, type GridHandle } from './Grid';
 import { StatusBar, type SelectionStats } from './StatusBar';
@@ -97,24 +98,6 @@ const contentWidths = (engine: SpreadsheetEngine) =>
 const DEMOS = [
   { label: 'Sample sheet', detail: 'Working formulas, then one of each error to fix', data: () => SAMPLE_SHEET, guide: 'sample' as const },
   { label: '10k-row stress test', detail: '60,000 cells and 30,000 formulas', data: stressSheet, guide: 'stress' as const },
-];
-
-const SHORTCUTS: [string, string][] = [
-  ['Arrows / Tab / Enter', 'Move, or start editing (Enter / F2)'],
-  ['Shift + Arrows', 'Extend selection'],
-  ['Ctrl/⌘ + Arrows', 'Jump to edge of data'],
-  ['Type any key', 'Replace cell contents'],
-  ['Esc', 'Cancel editing'],
-  ['Esc, then Tab', 'Leave the sheet'],
-  ['F6 / Shift + F6', 'Move between toolbar, formula bar and sheet'],
-  ['Delete / Backspace', 'Clear selection'],
-  ['Ctrl/⌘ + Z / Y', 'Undo / Redo'],
-  ['Ctrl/⌘ + C / X / V', 'Copy / Cut / Paste (formulas re-target)'],
-  ['Ctrl/⌘ + D / R', 'Fill down / right'],
-  ['Drag the ▪ handle', 'Fill: copies formulas, continues series'],
-  ['Click cells while typing a formula', 'Insert references'],
-  ['F8 / Shift + F8', 'Next / previous error'],
-  ['F9', 'Recalculate everything'],
 ];
 
 export default function Spreadsheet() {
@@ -951,6 +934,10 @@ export default function Spreadsheet() {
                   onResize={(width) => setColWidths((ws) => ws.map((w, c) => c === active.col ? width : w))}
                 />
                 <div className="narrow-only"><ThemePicker /></div>
+                <details className="help-details narrow-only">
+                  <summary>Help & shortcuts</summary>
+                  <HelpContent />
+                </details>
               </>
             )}
           </ToolMenu>
@@ -980,19 +967,8 @@ export default function Spreadsheet() {
           >
             {() => <ThemePicker />}
           </ToolMenu>
-          <ToolMenu className="end shortcuts" title="Keyboard shortcuts" label="Shortcuts">
-            {() => (
-              <table>
-                <tbody>
-                  {SHORTCUTS.map(([k, d]) => (
-                    <tr key={k}>
-                      <th>{k}</th>
-                      <td>{d}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+          <ToolMenu className="end shortcuts" title="Help & shortcuts" label="Help & shortcuts">
+            {() => <HelpContent />}
           </ToolMenu>
         </div>
       </header>

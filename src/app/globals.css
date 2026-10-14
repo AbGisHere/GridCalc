@@ -501,6 +501,43 @@ button {
   padding: 4px 0;
 }
 
+.help-content p {
+  margin: 8px 0;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.help-content h3 {
+  margin: 18px 0 6px;
+  font-size: var(--text-base);
+}
+
+.help-content table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.help-content th {
+  width: 45%;
+  white-space: normal;
+}
+
+.help-details {
+  padding: 4px 10px 8px;
+  border-top: 1px solid var(--border);
+}
+
+.help-details summary {
+  min-height: 44px;
+  align-content: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.help-details summary:hover {
+  color: var(--accent-strong);
+}
+
 /* ------------------------------------------------------------------ formula bar */
 .demo-guide {
   display: flex;
