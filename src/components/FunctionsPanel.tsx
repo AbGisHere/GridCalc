@@ -7,12 +7,13 @@ import { Icon } from './Icon';
 const ORDER: Category[] = ['Math', 'Statistical', 'Logical', 'Lookup', 'Text', 'Information'];
 
 interface FunctionsPanelProps {
+  address: string;
   onInsert(def: FnDef): void;
   onClose(): void;
 }
 
-/** Searchable reference of every supported function; clicking one inserts it. */
-export function FunctionsPanel({ onInsert, onClose }: FunctionsPanelProps) {
+/** Searchable reference with explicit insertion actions beside read-only examples. */
+export function FunctionsPanel({ address, onInsert, onClose }: FunctionsPanelProps) {
   const [q, setQ] = useState('');
   const groups = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -30,21 +31,23 @@ export function FunctionsPanel({ onInsert, onClose }: FunctionsPanelProps) {
           <Icon name="close" />
         </button>
       </header>
+      <p className="fn-hint">Insert starts or updates a formula in <b>{address}</b>.</p>
       <input className="fn-search" aria-label="Search functions" placeholder="Search functions…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
       <div className="fn-list">
         {groups.map((g) => (
           <section key={g.cat}>
             <h3>{g.cat}</h3>
             {g.fns.map((f) => (
-              <button key={f.name} className="fn-item" onClick={() => onInsert(f)} title="Insert into the active cell">
+              <div key={f.name} className="fn-item">
                 <code className="fn-sig">{f.signature}</code>
                 <span className="fn-desc">{f.description}</span>
                 {f.example && <code className="fn-example">{f.example}</code>}
-              </button>
+                <button className="fn-insert" onClick={() => onInsert(f)}>Insert {f.name}</button>
+              </div>
             ))}
           </section>
         ))}
-        {!groups.length && <p className="fn-empty">No function matches “{q}”.</p>}
+        {!groups.length && <p className="fn-empty">No function matches “{q}”. Try a function name or description.</p>}
       </div>
     </aside>
   );

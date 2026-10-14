@@ -1410,6 +1410,14 @@ button {
   margin-left: 4px;
 }
 
+.fn-hint {
+  flex-shrink: 0;
+  margin: 4px 14px 8px;
+  color: var(--muted);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .icon-btn {
   display: grid;
   place-items: center;
@@ -1456,15 +1464,25 @@ button {
   gap: 3px;
   width: 100%;
   text-align: left;
-  border: 0;
-  background: none;
   padding: 7px 8px;
-  border-radius: 7px;
+}
+
+.fn-insert {
+  align-self: flex-start;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--accent-strong);
+  font-weight: 600;
   cursor: pointer;
 }
 
-.fn-item:hover {
-  background: var(--bg);
+.fn-insert:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .fn-sig {

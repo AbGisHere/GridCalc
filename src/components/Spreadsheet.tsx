@@ -1083,6 +1083,7 @@ export default function Spreadsheet() {
         </div>
         {showFns && (
           <FunctionsPanel
+            address={activeAddress}
             onInsert={insertFunction}
             onClose={() => {
               setShowFns(false);

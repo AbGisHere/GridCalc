@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-10-15
+
+### Changed
+- Function examples are read-only reference content with explicit Insert buttons. The panel names the destination cell and explains the editing effect; empty searches suggest a function name or description.
+
 ## [0.3.5] - 2026-10-15
 
 ### Changed
