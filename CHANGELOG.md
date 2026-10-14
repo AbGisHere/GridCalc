@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-10-15
+
+### Fixed
+- When the sheet scrolls to bring a cell into view (arrow keys, the error count's Next, F8, the name box), it leaves a little room past the cell. Before, the cell landed exactly on the edge of the sheet, so on a phone the selection's right border and fill handle were cut off.
+
 ## [0.2.1] - 2026-10-15
 
 ### Fixed

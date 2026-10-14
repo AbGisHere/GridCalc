@@ -41,6 +41,8 @@ interface GridProps {
 const OVERSCAN_ROWS = 6;
 const OVERSCAN_COLS = 2;
 const EDGE = 28;
+/** Room left around a cell scrolled into view, so the fill handle and the touch grip on its corners aren't cut off. */
+const REVEAL_MARGIN = 8;
 /** Longest the recalculation wave can take: the deepest delay plus the fade (see .recalc in globals.css). */
 const WAVE_MS = 1300;
 
@@ -106,10 +108,12 @@ export function Grid(props: GridProps) {
         const viewW = el.clientWidth - ROW_HEADER_WIDTH;
         const top = row * ROW_HEIGHT;
         const left = layout.x(col);
-        if (top < el.scrollTop) el.scrollTop = top;
-        else if (top + ROW_HEIGHT > el.scrollTop + viewH) el.scrollTop = top + ROW_HEIGHT - viewH;
-        if (left < el.scrollLeft) el.scrollLeft = left;
-        else if (left + layout.width(col) > el.scrollLeft + viewW) el.scrollLeft = left + layout.width(col) - viewW;
+        const bottom = top + ROW_HEIGHT + REVEAL_MARGIN;
+        const right = left + layout.width(col) + REVEAL_MARGIN;
+        if (top - REVEAL_MARGIN < el.scrollTop) el.scrollTop = Math.max(0, top - REVEAL_MARGIN);
+        else if (bottom > el.scrollTop + viewH) el.scrollTop = bottom - viewH;
+        if (left - REVEAL_MARGIN < el.scrollLeft) el.scrollLeft = Math.max(0, left - REVEAL_MARGIN);
+        else if (right > el.scrollLeft + viewW) el.scrollLeft = right - viewW;
       },
     }),
     [layout],
