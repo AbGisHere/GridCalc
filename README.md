@@ -13,8 +13,6 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 
 **[Live demo →](https://gridcalc.abgupta.me)**
 
-> GDG Tech Wildcard Entry: Spreadsheet Web Application (Frontend / Full-Stack, Advanced)
-
 ## Features
 
 **Grid & editing**

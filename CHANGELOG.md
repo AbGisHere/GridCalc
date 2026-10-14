@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.16] - 2026-10-14
+
+### Removed
+- References to a specific event in the README and `PRODUCT.md`. The product brief now describes its audience as technical reviewers and its checklist as core requirements.
+
 ## [0.1.15] - 2026-10-14
 
 ### Fixed

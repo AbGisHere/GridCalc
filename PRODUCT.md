@@ -8,13 +8,13 @@ web
 
 ## Users
 
-GDG Tech Wildcard Entry judges, evaluating GridCalc in a short demo for the "Spreadsheet Web Application (Frontend / Full-Stack, Advanced)" track. They have limited time and judge engineering depth: grid virtualization, the formula engine, dependency tracking, circular-reference detection and error diagnostics. Most will use a laptop or desktop with a keyboard, but some may open the live link on a phone.
+Technical reviewers evaluating GridCalc in a short demo. They have limited time and look for engineering depth: grid virtualization, the formula engine, dependency tracking, circular-reference detection and error diagnostics. Most will use a laptop or desktop with a keyboard, but some may open the live link on a phone.
 
 ## Product Purpose
 
-GridCalc is a spreadsheet that runs entirely in the browser, with a formula engine written from scratch. Success means a judge can see, within the first minute, that the competition requirements are met and exceeded, and can verify each one live instead of taking the README's word for it.
+GridCalc is a spreadsheet that runs entirely in the browser, with a formula engine written from scratch. Success means a reviewer can see, within the first minute, that the core requirements are met and exceeded, and can verify each one live instead of taking the README's word for it.
 
-Competition requirements it must visibly satisfy:
+Core requirements it must visibly satisfy:
 
 - A grid of at least 10,000 cells with virtualization; selection, editing, keyboard navigation, a formula bar, drag-to-fill and undo/redo.
 - A custom parser and evaluator with at least 30 functions, including SUM, IF and VLOOKUP; expressions, references, ranges and nesting.
@@ -25,7 +25,7 @@ Competition requirements it must visibly satisfy:
 
 - **Self-explaining errors.** Every error shows the formula with a caret under the problem, a plain-language explanation, a suggestion and, where possible, a one-click fix that is re-parsed before it is offered. Errors that flow in from other cells name and link to their source.
 - **Built from scratch.** Hand-written lexer, Pratt parser, tree-walking evaluator and dependency graph (iterative Tarjan SCC). No spreadsheet or formula libraries; the only runtime dependencies are React and Next.js.
-- **Visible engine.** The status bar shows how many cells an edit recalculated and how long it took, and how many cells are in the DOM out of 10,000,000 (the "DOM cells" counter), so a judge can watch virtualization and incremental recalculation working.
+- **Visible engine.** The status bar shows how many cells an edit recalculated and how long it took, and how many cells are in the DOM out of 10,000,000 (the "DOM cells" counter), so a reviewer can watch virtualization and incremental recalculation working.
 - **Private, no backend.** Data stays in `localStorage`; the app makes no network requests.
 
 ## Operating Context
@@ -33,7 +33,7 @@ Competition requirements it must visibly satisfy:
 - Live at https://gridcalc.abgupta.me (Vercel); source at https://github.com/AbGisHere/GridCalc.
 - First load opens a sample sheet with working formulas and one example of each error type; the red cells are the entry point to the diagnostics panel.
 - A "10k-row stress test" entry in the toolbar's Demos menu loads 60,000 cells and 30,000 formulas to demonstrate scale.
-- Judges may read the README, `docs/ARCHITECTURE.md` and `docs/FUNCTIONS.md` alongside the app.
+- Reviewers may read the README, `docs/ARCHITECTURE.md` and `docs/FUNCTIONS.md` alongside the app.
 
 ## Capabilities and Constraints
 
@@ -60,7 +60,7 @@ Competition requirements it must visibly satisfy:
 
 ## Product Principles
 
-1. **Proof over claims.** Every capability a judge cares about should be demonstrable in the live app within seconds, not only described in docs.
+1. **Proof over claims.** Every capability a reviewer cares about should be demonstrable in the live app within seconds, not only described in docs.
 2. **Errors teach.** A failure state is a feature: it explains what went wrong, where, and how to fix it.
 3. **Show the engine.** Make the invisible work (recalculation, dependencies, virtualization) observable without cluttering the sheet.
 4. **Spreadsheet expectations first.** Keyboard behaviour, selection and editing match what Excel and Google Sheets users already know.
@@ -70,4 +70,4 @@ Competition requirements it must visibly satisfy:
 
 - WCAG 2.2 AA: contrast, visible focus, full keyboard operation, and accessible names for controls.
 - Desktop first: keyboard-heavy work on a laptop or desktop is the main scene.
-- Mobile must be good, not merely functional: judges may open the live link on a phone.
+- Mobile must be good, not merely functional: reviewers may open the live link on a phone.
