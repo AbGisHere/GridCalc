@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-10-14
+
+### Added
+- `ROADMAP.md`: double-clicking a column edge to auto-fit its width, as in Excel.
+
+### Changed
+- The diagnostics panel is docked at the bottom of the sheet, just above the status bar and its error count, instead of floating over the cells in the bottom-right corner. The sheet shrinks to make room, so nothing it shows moves or is covered, and the active cell is scrolled back into view if needed. On a phone the panel spans the full width.
+- The panel's left column is exactly as wide as the name box and ƒx button, so the formula and its caret line up character for character under the formula bar's text. The colored left stripe is replaced by a tinted column holding the error code.
+- Live diagnostics wait until you pause typing, and stay quiet while the autocomplete list is open. Typing `=SU` no longer flags `#NAME?` with a wrong "wrap it in quotes" fix. The last result stays up while you keep typing, so the panel doesn't flicker.
+
 ## [0.1.10] - 2026-10-14
 
 ### Added

@@ -39,60 +39,63 @@ export function DiagnosticsPanel({ view, onApplyFix, onGoTo, onDismiss }: Diagno
   const f = view.formula;
 
   return (
-    <aside className={`diag diag-${view.kind}`} role="status" aria-live="polite">
-      <header className="diag-head">
+    <aside className={`diag diag-${view.kind}`} role="status" aria-live="polite" aria-label="Diagnostics">
+      <div className="diag-gutter">
         <span className="diag-code">{view.code}</span>
         <span className="diag-title">
           {TITLES[view.kind]} in <b>{view.address}</b>
         </span>
-        <button className="diag-close" onClick={onDismiss} aria-label="Hide diagnostics">
-          ×
-        </button>
-      </header>
+      </div>
 
-      <p className="diag-message">{view.message}</p>
+      <div className="diag-body">
+        <p className="diag-message">{view.message}</p>
 
-      {hasSpan && (
-        <pre className="diag-code-block" aria-label="Formula with error position">
-          <span className="diag-formula">
-            {f.slice(0, start)}
-            <mark>{f.slice(start, Math.max(end, start)) || ' '}</mark>
-            {f.slice(Math.max(end, start))}
-          </span>
-          {'\n'}
-          <span className="diag-caret">{caretLine(start, end)}</span>
-          {view.related && (
-            <>
-              {'\n'}
-              <span className="diag-related">
-                {' '.repeat(view.related.start)}
-                {'↑ '}
-                {view.related.label}
-              </span>
-            </>
-          )}
-        </pre>
-      )}
+        {hasSpan && (
+          <pre className="diag-code-block" aria-label="Formula with error position">
+            <span className="diag-formula">
+              {f.slice(0, start)}
+              <mark>{f.slice(start, Math.max(end, start)) || ' '}</mark>
+              {f.slice(Math.max(end, start))}
+            </span>
+            {'\n'}
+            <span className="diag-caret">{caretLine(start, end)}</span>
+            {view.related && (
+              <>
+                {'\n'}
+                <span className="diag-related">
+                  {' '.repeat(view.related.start)}
+                  {'↑ '}
+                  {view.related.label}
+                </span>
+              </>
+            )}
+          </pre>
+        )}
 
-      {view.origin && (
-        <p className="diag-origin">
-          This error comes from <button onClick={() => onGoTo(view.origin!)}>{view.origin}</button> and flows into this
-          cell through a reference.
-        </p>
-      )}
+        {view.origin && (
+          <p className="diag-origin">
+            This error comes from <button onClick={() => onGoTo(view.origin!)}>{view.origin}</button> and flows into this
+            cell through a reference.
+          </p>
+        )}
 
-      {view.suggestion && (
-        <p className="diag-suggestion">
-          <span className="diag-label">Suggestion</span> {view.suggestion}
-        </p>
-      )}
+        {view.suggestion && (
+          <p className="diag-suggestion">
+            <span className="diag-label">Suggestion</span> {view.suggestion}
+          </p>
+        )}
 
-      {view.fix && (
-        <div className="diag-fix">
-          <code>{view.fix}</code>
-          <button onClick={() => onApplyFix(view.fix!)}>Apply fix</button>
-        </div>
-      )}
+        {view.fix && (
+          <div className="diag-fix">
+            <code>{view.fix}</code>
+            <button onClick={() => onApplyFix(view.fix!)}>Apply fix</button>
+          </div>
+        )}
+      </div>
+
+      <button className="diag-close" onClick={onDismiss} aria-label="Hide diagnostics">
+        ×
+      </button>
     </aside>
   );
 }

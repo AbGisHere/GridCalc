@@ -46,7 +46,8 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 **Error diagnostics**
 - Every error explains itself in a panel showing the formula with a **caret under the problem**, a **suggestion**, and, where possible, a verified **one-click fix**.
 - Calculation errors get advice too: `#DIV/0!` and `#N/A` offer a one-click `IFERROR` wrap, and `#VALUE!`, `#NUM!` and `#CIRC!` explain what to change.
-- Live diagnostics appear while you type.
+- Diagnostics dock below the sheet, above the error count, with the formula lined up under the formula bar's text. They never cover cells, and opening them doesn't move the sheet.
+- Live diagnostics appear once you pause typing, and not while the autocomplete is open, so a half-typed name isn't flagged.
 - Errors that flow in from other cells name their source and link to it.
 - The status bar counts the sheet's errors; **Next** (or F8 / Shift+F8) jumps from one to the next, so they're easy to reach on a phone too.
 

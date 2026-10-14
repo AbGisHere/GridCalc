@@ -316,6 +316,18 @@ export default function Spreadsheet() {
 
   const assist = useMemo(() => (edit && !assistOff ? assistAt(edit.value, caret) : null), [edit, assistOff, caret]);
   const assistSel = Math.min(assistIdx, Math.max(0, (assist?.suggestions.length ?? 0) - 1));
+  const suggesting = !!assist?.suggestions.length;
+
+  // Live diagnostics check the formula once typing pauses, and not while the autocomplete is open,
+  // so a half-typed name like =SU isn't flagged. The last result stays up while you keep typing.
+  const [lint, setLint] = useState<string | null>(null);
+  const editValue = edit?.value;
+  useEffect(() => {
+    if (editValue === undefined) return setLint(null);
+    if (suggesting) return;
+    const t = setTimeout(() => setLint(editValue), 500);
+    return () => clearTimeout(t);
+  }, [editValue, suggesting]);
 
   const acceptSuggestion = (def: FnDef) => {
     if (!edit || !assist?.prefix) return;
@@ -684,9 +696,9 @@ export default function Spreadsheet() {
 
   const diagView: DiagnosticView | null = useMemo(() => {
     if (edit) {
-      if (!edit.value.startsWith('=') || edit.value.length < 2) return null;
-      const d = parseFormula(edit.value).diagnostic;
-      return d ? { kind: 'live', address: toA1(edit.row, edit.col), formula: edit.value, ...d } : null;
+      if (suggesting || !lint?.startsWith('=') || lint.length < 2) return null;
+      const d = parseFormula(lint).diagnostic;
+      return d ? { kind: 'live', address: toA1(edit.row, edit.col), formula: lint, ...d } : null;
     }
     const rec = engine.getRecord(active.row, active.col);
     if (!rec) return null;
@@ -709,7 +721,7 @@ export default function Spreadsheet() {
     return null;
     // `version` invalidates when values change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [edit, engine, active.row, active.col, activeAddress, version]);
+  }, [edit, lint, suggesting, engine, active.row, active.col, activeAddress, version]);
 
   const selStats: SelectionStats = useMemo(() => {
     const r = selectionRange(sel);
@@ -741,8 +753,14 @@ export default function Spreadsheet() {
 
   const refMarks = useMemo(() => (edit ? formulaRefs(edit.value) : []), [edit]);
   const barValue = edit ? edit.value : (activeRec?.raw ?? '');
-  const showDiag = diagView && !diagHidden;
-  const assistOpen = (target: EditState['target']) => edit?.target === target && !!assist?.suggestions.length;
+  const showDiag = !!diagView && !diagHidden;
+  const assistOpen = (target: EditState['target']) => edit?.target === target && suggesting;
+
+  // The docked panel takes its height from the bottom of the sheet: keep the active cell in view.
+  useEffect(() => {
+    if (showDiag) gridRef.current?.scrollIntoView(active);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showDiag]);
 
   const selectionLabel = (() => {
     const r = selectionRange(sel);
@@ -927,7 +945,7 @@ export default function Spreadsheet() {
           </p>
           {showDiag && (
             <DiagnosticsPanel
-              view={diagView}
+              view={diagView!}
               onApplyFix={applyFix}
               onGoTo={(a1) => goTo(a1)}
               onDismiss={() => setDiagHidden(true)}

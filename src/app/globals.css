@@ -20,6 +20,8 @@
   --string: #0f766e;
   --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.06);
   --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  /* Name box + ƒx button; the diagnostics gutter shares it so formulas line up. */
+  --gutter: 148px;
   --sans: ui-sans-serif, -apple-system, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif;
   color-scheme: light;
 }
@@ -283,7 +285,7 @@ button {
 }
 
 .name-box {
-  width: 110px;
+  width: calc(var(--gutter) - 38px);
   border: 0;
   border-right: 1px solid var(--border);
   padding: 0 10px;
@@ -298,6 +300,7 @@ button {
 }
 
 .fx-button {
+  width: 38px;
   border: 0;
   border-right: 1px solid var(--border);
   background: var(--bg);
@@ -478,12 +481,14 @@ button {
   min-width: 0;
   min-height: 0;
   display: flex;
+  flex-direction: column;
 }
 
 /* ------------------------------------------------------------------ grid */
 .grid-scroller {
   position: relative;
   flex: 1;
+  min-height: 0;
   overflow: auto;
   outline: none;
   background: var(--bg);
@@ -723,27 +728,33 @@ button {
 
 /* ------------------------------------------------------------------ diagnostics */
 .diag {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
-  z-index: 15;
-  width: min(520px, calc(100% - 32px));
+  flex: none;
+  display: grid;
+  grid-template-columns: var(--gutter) minmax(0, 1fr) auto;
+  max-height: 45%;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
   background: var(--bg);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--error);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
-  padding: 12px 14px;
 }
 
-.diag-live {
-  border-left-color: var(--warn);
-}
-
-.diag-head {
+/* Same width as the name box and ƒx button, so the formula below lines up with the formula bar's text. */
+.diag-gutter {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px 10px;
+  background: var(--error-soft);
+  border-right: 1px solid var(--border);
+}
+
+.diag-live .diag-gutter {
+  background: var(--warn-soft);
+}
+
+.diag-body {
+  padding: 10px 12px 12px;
+  min-width: 0;
 }
 
 .diag-code {
@@ -761,7 +772,8 @@ button {
 
 .diag-title {
   color: var(--muted);
-  flex: 1;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .diag-title b {
@@ -770,27 +782,34 @@ button {
 }
 
 .diag-close {
+  align-self: start;
+  width: 32px;
+  height: 32px;
+  margin: 4px;
   border: 0;
+  border-radius: 6px;
   background: none;
   font-size: 18px;
   line-height: 1;
   color: var(--muted);
   cursor: pointer;
-  padding: 0 2px;
+}
+
+.diag-close:hover {
+  background: var(--surface-2);
 }
 
 .diag-message {
-  margin: 8px 0;
+  margin: 0 0 8px;
   font-size: 13.5px;
   font-weight: 550;
 }
 
 .diag-code-block {
-  margin: 0 0 8px;
-  padding: 8px 10px;
+  margin: 0 -12px 8px;
+  padding: 6px 12px;
   background: var(--surface);
-  border-radius: 6px;
-  font: 12.5px/1.5 var(--mono);
+  font: 13px/1.5 var(--mono);
   overflow-x: auto;
 }
 
@@ -855,6 +874,7 @@ button {
 
 .diag-fix code {
   flex: 1;
+  margin-left: -8px;
   font: 12.5px var(--mono);
   background: var(--accent-soft);
   padding: 5px 8px;
@@ -1063,6 +1083,23 @@ button {
   }
   .workspace {
     position: relative;
+  }
+  .diag {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .diag-gutter {
+    grid-area: 1 / 1 / 2 / -1;
+    flex-direction: row;
+    align-items: center;
+    border-right: 0;
+    padding: 8px 44px 8px 12px;
+  }
+  .diag-close {
+    grid-area: 1 / 2;
+    margin: 2px 4px;
+  }
+  .diag-body {
+    grid-column: 1 / -1;
   }
   .toolbar .brand-name {
     position: absolute;
