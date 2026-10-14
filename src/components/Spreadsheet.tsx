@@ -39,7 +39,7 @@ import { ToolMenu } from './ToolMenu';
 import { ColumnWidthControl } from './ColumnWidthControl';
 import { DemoGuide } from './DemoGuide';
 import { HelpContent } from './HelpContent';
-import { defaultColumnWidths, fittedColumnWidths, ROW_HEIGHT } from './geometry';
+import { clampColumnWidth, defaultColumnWidths, fittedColumnWidths, ROW_HEIGHT } from './geometry';
 import { Grid, type DragMode, type GridHandle } from './Grid';
 import { StatusBar, type SelectionStats } from './StatusBar';
 
@@ -138,6 +138,7 @@ export default function Spreadsheet() {
   const workspaceRef = useRef<HTMLElement>(null);
   /** Set by Escape on the grid: the next Tab leaves the sheet instead of moving to the next cell. */
   const tabOut = useRef(false);
+  const composing = useRef(false);
   const assistId = useId();
   const refInsert = useRef<{ start: number; end: number; anchor: CellPos } | null>(null);
   const lastDrag = useRef('');
@@ -170,7 +171,7 @@ export default function Spreadsheet() {
       widths = localStorage.getItem(WIDTHS_KEY);
       if (widths) {
         const w: unknown = JSON.parse(widths);
-        if (Array.isArray(w) && w.length === SHEET_COLS && w.every((n) => Number.isFinite(n) && n > 0)) setColWidths(w);
+        if (Array.isArray(w) && w.length === SHEET_COLS && w.every((n) => typeof n === 'number')) setColWidths(w.map(clampColumnWidth));
       }
     } catch {
       data = null;
@@ -369,6 +370,8 @@ export default function Spreadsheet() {
 
   const onEditorKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!edit) return;
+    // IME candidate navigation and confirmation belong to the text input, including Safari's 229 key events.
+    if (composing.current || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
     const suggestions = assist?.suggestions ?? [];
     if (suggestions.length) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -825,6 +828,8 @@ export default function Spreadsheet() {
         onSelect={(e) => setCaret((e.target as HTMLInputElement).selectionStart ?? 0)}
         onFocus={() => edit.target !== 'cell' && setEdit({ ...edit, target: 'cell' })}
         onKeyDown={onEditorKeyDown}
+        onCompositionStart={() => { composing.current = true; }}
+        onCompositionEnd={() => { composing.current = false; }}
       />
       {edit.target === 'cell' && assist && (
         <div className="assist-anchor">
@@ -990,6 +995,8 @@ export default function Spreadsheet() {
           onChange={(value, pos) => (edit ? changeEdit(value, pos) : startEdit(active, value, 'edit', 'bar'))}
           onCaret={setCaret}
           onKeyDown={onEditorKeyDown}
+          onCompositionStart={() => { composing.current = true; }}
+          onCompositionEnd={() => { composing.current = false; }}
           functionsOpen={showFns}
           onToggleFunctions={() => setShowFns((v) => !v)}
         />
@@ -1059,7 +1066,10 @@ export default function Spreadsheet() {
               view={diagView!}
               onApplyFix={applyFix}
               onGoTo={(a1) => goTo(a1)}
-              onDismiss={() => setDiagHidden(true)}
+              onDismiss={() => {
+                setDiagHidden(true);
+                gridRef.current?.focus();
+              }}
             />
           )}
         </div>

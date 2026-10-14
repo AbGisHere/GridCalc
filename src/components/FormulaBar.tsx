@@ -15,6 +15,8 @@ interface FormulaBarProps {
   onChange(value: string, caret: number): void;
   onCaret(caret: number): void;
   onKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void;
+  onCompositionStart(): void;
+  onCompositionEnd(): void;
   functionsOpen: boolean;
   onToggleFunctions(): void;
 }
@@ -60,6 +62,7 @@ export function FormulaBar(props: FormulaBarProps) {
         onBlur={() => setNameFocused(false)}
         onChange={(e) => setNameText(e.target.value)}
         onKeyDown={(e) => {
+          if (e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229) return;
           if (e.key === 'Enter') {
             if (props.onNavigate(nameText)) (e.target as HTMLInputElement).blur();
           } else if (e.key === 'Escape') {
@@ -100,6 +103,8 @@ export function FormulaBar(props: FormulaBarProps) {
           onChange={(e) => props.onChange(e.target.value, e.target.selectionStart ?? e.target.value.length)}
           onSelect={(e) => props.onCaret((e.target as HTMLInputElement).selectionStart ?? 0)}
           onKeyDown={props.onKeyDown}
+          onCompositionStart={props.onCompositionStart}
+          onCompositionEnd={props.onCompositionEnd}
           onScroll={syncScroll}
           onKeyUp={syncScroll}
         />

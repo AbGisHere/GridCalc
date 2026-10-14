@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-15
+
+### Fixed
+- Formula and in-cell editors leave IME candidate keys to the input. Hiding diagnostics restores sheet focus, and column resizing and saved widths share safe bounds of 36–2,000 px.
+
 ## [0.3.0] - 2026-10-15
 
 ### Added

@@ -7,7 +7,7 @@ import { CellError, displayValue } from '@/engine/values';
 import { fillTarget } from '@/state/fill';
 import { selectionRange, type Selection } from '@/state/selection';
 import type { RefMark } from './formulaTokens';
-import { ColumnLayout, HEADER_HEIGHT, MIN_COL_WIDTH, ROW_HEADER_WIDTH, ROW_HEIGHT } from './geometry';
+import { clampColumnWidth, ColumnLayout, HEADER_HEIGHT, ROW_HEADER_WIDTH, ROW_HEIGHT } from './geometry';
 import { trackPointer, trackTap } from './pointer';
 
 export type DragMode = 'select' | 'ref' | 'none';
@@ -263,7 +263,7 @@ export function Grid(props: GridProps) {
     e.preventDefault();
     const startX = e.clientX;
     const startW = colWidths[col];
-    trackPointer(e, (ev) => live.current.onColResize(col, Math.max(MIN_COL_WIDTH, startW + ev.clientX - startX)));
+    trackPointer(e, (ev) => live.current.onColResize(col, clampColumnWidth(startW + ev.clientX - startX)));
   };
 
   // ----------------------------------------------------------- render helpers

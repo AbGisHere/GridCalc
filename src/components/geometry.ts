@@ -5,6 +5,10 @@ export const HEADER_HEIGHT = 26;
 export const ROW_HEADER_WIDTH = 60;
 const DEFAULT_COL_WIDTH = 104;
 export const MIN_COL_WIDTH = 36;
+export const MAX_COL_WIDTH = 2000;
+
+export const clampColumnWidth = (width: number): number =>
+  Number.isFinite(width) ? Math.max(MIN_COL_WIDTH, Math.min(MAX_COL_WIDTH, width)) : DEFAULT_COL_WIDTH;
 
 export const defaultColumnWidths = (): number[] => Array.from({ length: SHEET_COLS }, () => DEFAULT_COL_WIDTH);
 
