@@ -15,7 +15,7 @@
 
 /*
  * Colour tokens. public/theme.js sets data-theme on <html> before the first paint: light, dark, or semi
- * (dark around the sheet, and the sheet itself light, as it would print).
+ * (dark around the sheet, the column and row headers included, and the cells light, as they would print).
  */
 :root,
 :root[data-theme='semi'] .grid-scroller {
@@ -52,7 +52,9 @@
 }
 
 :root[data-theme='dark'],
-:root[data-theme='semi'] {
+:root[data-theme='semi'],
+:root[data-theme='semi'] .col-headers,
+:root[data-theme='semi'] .row-headers {
   --bg: var(--ink);
   --surface: #1d1e1d;
   --surface-2: #262826;

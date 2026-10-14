@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.21] - 2026-10-14
+
+### Changed
+- In the **Semi** theme the column letters and row numbers are dark too, so only the cells are white.
+
 ## [0.1.20] - 2026-10-14
 
 ### Added
