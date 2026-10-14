@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-10-14
+
+### Fixed
+- Clicking a cell no longer selects everything from A1 to that cell. The drag loop started tracking the pointer from the top-left corner of the screen, so on its first frame it extended the selection to A1. This hit any click held longer than one frame, and column and row header clicks too.
+
 ## [0.1.5] - 2026-10-14
 
 ### Added
@@ -57,7 +62,8 @@ First public release.
 - CSV export neutralizes text that other spreadsheet apps would run as a formula (CSV injection).
 - Sheet data and column widths loaded from `localStorage` are validated before use.
 
-[Unreleased]: https://github.com/AbGisHere/GridCalc/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/AbGisHere/GridCalc/compare/v0.1.6...HEAD
+[0.1.6]: https://github.com/AbGisHere/GridCalc/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/AbGisHere/GridCalc/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/AbGisHere/GridCalc/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/AbGisHere/GridCalc/compare/v0.1.2...v0.1.3

@@ -123,9 +123,9 @@ export function Grid(props: GridProps) {
 
   /** Shared drag loop: tracks the pointer, auto-scrolls near edges, reports cell positions. */
   const startDrag = useCallback(
-    (onMove: (pos: CellPos) => void, onEnd?: () => void) => {
-      let lastX = 0;
-      let lastY = 0;
+    (start: React.MouseEvent, onMove: (pos: CellPos) => void, onEnd?: () => void) => {
+      let lastX = start.clientX;
+      let lastY = start.clientY;
       let raf = 0;
       const tick = () => {
         const el = scrollerRef.current;
@@ -173,7 +173,7 @@ export function Grid(props: GridProps) {
       e.preventDefault();
       scrollerRef.current?.focus({ preventScroll: true });
     }
-    startDrag((p) => live.current.onPointerDrag(p, mode));
+    startDrag(e, (p) => live.current.onPointerDrag(p, mode));
   };
 
   const onFillHandleDown = (e: React.MouseEvent) => {
@@ -182,6 +182,7 @@ export function Grid(props: GridProps) {
     const source = selectionRange(live.current.selection);
     let target: RangeBounds | null = null;
     startDrag(
+      e,
       (p) => {
         target = fillTarget(source, p);
         setFillPreview(target);
@@ -211,11 +212,11 @@ export function Grid(props: GridProps) {
     if (kind === 'col') {
       selectColumns(index, e.shiftKey);
       const anchor = e.shiftKey ? selection.anchor.col : index;
-      startDrag((p) => live.current.onSelect({ anchor: { row: 0, col: anchor }, head: { row: rows - 1, col: p.col } }));
+      startDrag(e, (p) => live.current.onSelect({ anchor: { row: 0, col: anchor }, head: { row: rows - 1, col: p.col } }));
     } else {
       selectRows(index, e.shiftKey);
       const anchor = e.shiftKey ? selection.anchor.row : index;
-      startDrag((p) => live.current.onSelect({ anchor: { row: anchor, col: 0 }, head: { row: p.row, col: layout.count - 1 } }));
+      startDrag(e, (p) => live.current.onSelect({ anchor: { row: anchor, col: 0 }, head: { row: p.row, col: layout.count - 1 } }));
     }
   };
 
