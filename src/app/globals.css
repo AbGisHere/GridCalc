@@ -836,7 +836,7 @@ button {
 
 /* The ring crosses dark headers and white cells in the semi theme. */
 :root[data-theme='semi'] .grid-scroller:focus-visible {
-  outline-color: #22875d;
+  outline-color: #329d73;
 }
 
 .grid-canvas {

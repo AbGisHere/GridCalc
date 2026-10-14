@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.9] - 2026-10-15
+
+### Fixed
+- The semi-theme sheet focus ring meets 3:1 contrast against white cells, dark headers and selected headers.
+
 ## [0.2.8] - 2026-10-15
 
 ### Added
