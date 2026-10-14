@@ -5,6 +5,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.17] - 2026-10-14
+
+### Added
+- Range selection by touch: a round grip on the selection's top-left corner, shown on touch screens, drags out a range. A swipe on the cells still scrolls the sheet.
+
+### Changed
+- On a phone, **Import CSV**, **Export CSV** and **Clear** are in one **Sheet** menu, each with a line saying what it does, so the toolbar fits on one row at 320 px. Menus on a phone open full-width under the toolbar.
+- On touch screens of any width, toolbar buttons, the formula bar, the ƒx button and the close buttons are at least 44 px, and the error navigator and the status bar's **Undo** are 36 px tall. The status bar's **Undo** is 24 px tall everywhere, up from 22 px.
+- The fill handle and the column edges have 44 px touch targets on touch screens.
+
+### Fixed
+- Drag-to-fill and column resizing work by touch; both were mouse-only. Grid drags use pointer events and end on release, cancel, or when the window loses focus.
+- At 320 px the last toolbar button ran past the screen's edge, and the Demos menu could open partly off-screen.
+
 ## [0.1.16] - 2026-10-14
 
 ### Removed

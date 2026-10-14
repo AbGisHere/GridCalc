@@ -318,8 +318,17 @@ button {
   cursor: pointer;
 }
 
-.menu-item:hover {
+.menu-item:hover:not(:disabled) {
   background: var(--surface-2);
+}
+
+.menu-item:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.narrow-only {
+  display: none;
 }
 
 .menu-item span {
@@ -667,6 +676,7 @@ button {
   height: 100%;
   cursor: col-resize;
   z-index: 2;
+  touch-action: none;
 }
 
 .col-resizer:hover {
@@ -744,17 +754,56 @@ button {
   position: absolute;
   width: 8px;
   height: 8px;
+  margin: -4px 0 0 -4px;
   background: var(--accent);
   border: 1.5px solid var(--bg);
   cursor: crosshair;
   z-index: 3;
+  touch-action: none;
 }
 
-/* The handle stays 8px to the eye but takes a 24px target for the pointer. */
-.fill-handle::after {
+/* The handles stay small to the eye but take a 24px target for a mouse and 44px for a finger. */
+.fill-handle::after,
+.sel-grip::after {
   content: '';
   position: absolute;
   inset: -8px;
+}
+
+/* Touch only: a drag on the cells scrolls, so this grip on the selection's top-left corner selects a range. */
+.sel-grip {
+  display: none;
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--bg);
+  z-index: 3;
+  touch-action: none;
+}
+
+@media (any-pointer: coarse) {
+  .sel-grip {
+    display: block;
+  }
+  .fill-handle {
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+  }
+  .fill-handle::after,
+  .sel-grip::after {
+    inset: -16px;
+  }
+  .col-resizer {
+    right: -12px;
+    width: 24px;
+  }
+  .col-resizer:hover {
+    background: linear-gradient(to right, transparent 11px, var(--accent) 11px, var(--accent) 13px, transparent 13px);
+  }
 }
 
 .fill-preview {
@@ -1003,7 +1052,10 @@ button {
 }
 
 .icon-btn {
+  width: 32px;
+  height: 32px;
   border: 0;
+  border-radius: 6px;
   background: none;
   font-size: 18px;
   cursor: pointer;
@@ -1144,7 +1196,7 @@ button {
 
 .status-undo {
   flex: none;
-  height: 22px;
+  height: 24px;
   padding: 0 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -1222,6 +1274,13 @@ button {
   .toolbar {
     flex-wrap: nowrap;
     gap: 4px;
+    padding: 8px;
+  }
+  .brand {
+    margin-right: 4px;
+  }
+  .menu-wrap .tool {
+    gap: 2px;
   }
   .tool-group {
     padding-left: 4px;
@@ -1231,8 +1290,27 @@ button {
     min-height: 36px;
     justify-content: center;
   }
-  .shortcuts {
+  .shortcuts,
+  .wide-only {
     display: none;
+  }
+  .narrow-only {
+    display: block;
+  }
+  /* Menus open full-width under the toolbar instead of running off the screen's edge. */
+  .toolbar {
+    position: relative;
+  }
+  .menu-wrap {
+    position: static;
+  }
+  .menu-pop,
+  .menu-wrap.end .menu-pop {
+    left: 8px;
+    right: 8px;
+    top: calc(100% + 4px);
+    width: auto;
+    max-width: none;
   }
   .tool-label,
   .toolbar .brand-name {
@@ -1245,13 +1323,39 @@ button {
   }
 }
 
-/* iOS Safari zooms the page into any focused input under 16px. */
-@media (max-width: 760px) and (pointer: coarse) {
+/* On touch screens of any width: iOS Safari zooms the page into any focused input under 16px, and controls a thumb uses are at least 44px. */
+@media (pointer: coarse) {
   .name-box,
   .fb-input,
   .fb-overlay,
   .cell-editor,
   .fn-search {
     font-size: 16px;
+  }
+  .formula-bar {
+    height: 44px;
+  }
+  .fb-input,
+  .fb-overlay {
+    line-height: 44px;
+  }
+  .fx-button {
+    width: 44px;
+  }
+  .name-box {
+    width: calc(var(--gutter) - 44px);
+  }
+  .tool {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .diag-close,
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+  .err-nav,
+  .status-undo {
+    height: 36px;
   }
 }

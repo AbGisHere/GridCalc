@@ -810,6 +810,12 @@ export default function Spreadsheet() {
     </>
   );
 
+  const sheetActions: { label: string; detail: string; icon?: 'import' | 'export'; run(): void; disabled?: boolean }[] = [
+    { label: 'Import CSV', detail: 'Replace the sheet with a .csv file', icon: 'import', run: () => fileRef.current?.click() },
+    { label: 'Export CSV', detail: 'Download the sheet as a .csv file', icon: 'export', run: exportCSV },
+    { label: 'Clear', detail: 'Empty the sheet; Undo brings it back', run: () => replaceSheet({}, 'Clear sheet'), disabled: !engine.cellCount },
+  ];
+
   // ------------------------------------------------------------------ render
   return (
     <div className="app" onKeyDown={onAppKeyDown}>
@@ -865,14 +871,40 @@ export default function Spreadsheet() {
         </div>
 
         <div className="tool-group">
-          <button className="tool" onClick={() => fileRef.current?.click()}>
-            <Icon name="import" />
-            <span className="tool-label">Import CSV</span>
-          </button>
-          <button className="tool" onClick={exportCSV}>
-            <Icon name="export" />
-            <span className="tool-label">Export CSV</span>
-          </button>
+          {sheetActions.slice(0, 2).map((a) => (
+            <button key={a.label} className="tool wide-only" onClick={a.run}>
+              <Icon name={a.icon!} />
+              <span className="tool-label">{a.label}</span>
+            </button>
+          ))}
+          {/* On a phone the CSV buttons and Clear share one menu, so the toolbar fits on one row with 44px targets. */}
+          <ToolMenu
+            className="narrow-only end"
+            title="Sheet actions"
+            label={
+              <>
+                Sheet
+                <Icon name="chevron" />
+              </>
+            }
+          >
+            {(close) =>
+              sheetActions.map((a) => (
+                <button
+                  key={a.label}
+                  className="menu-item"
+                  disabled={a.disabled}
+                  onClick={() => {
+                    close();
+                    a.run();
+                  }}
+                >
+                  <b>{a.label}</b>
+                  <span>{a.detail}</span>
+                </button>
+              ))
+            }
+          </ToolMenu>
           <input
             ref={fileRef}
             type="file"
@@ -886,8 +918,8 @@ export default function Spreadsheet() {
           />
         </div>
 
-        <div className="tool-group right">
-          <button className="tool" onClick={() => replaceSheet({}, 'Clear sheet')} disabled={!engine.cellCount}>
+        <div className="tool-group right wide-only">
+          <button className="tool" onClick={sheetActions[2].run} disabled={sheetActions[2].disabled}>
             Clear
           </button>
           <ToolMenu className="end shortcuts" title="Keyboard shortcuts" label="Shortcuts">

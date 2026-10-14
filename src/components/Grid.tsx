@@ -122,9 +122,9 @@ export function Grid(props: GridProps) {
     [layout, rows],
   );
 
-  /** Shared drag loop: tracks the pointer, auto-scrolls near edges, reports cell positions. */
+  /** Shared drag loop for mouse, pen and touch: tracks the pointer, auto-scrolls near edges, reports cell positions. */
   const startDrag = useCallback(
-    (start: React.MouseEvent, onMove: (pos: CellPos) => void, onEnd?: () => void) => {
+    (start: React.PointerEvent | React.MouseEvent, onMove: (pos: CellPos) => void, onEnd?: () => void) => {
       let lastX = start.clientX;
       let lastY = start.clientY;
       let raf = 0;
@@ -146,22 +146,15 @@ export function Grid(props: GridProps) {
         }
         raf = requestAnimationFrame(tick);
       };
-      const move = (e: MouseEvent) => {
+      const move = (e: PointerEvent) => {
         lastX = e.clientX;
         lastY = e.clientY;
         onMove(posFromClient(e.clientX, e.clientY));
       };
-      // Releasing the button or losing the window (Alt+Tab mid-drag) both end the drag.
-      const up = () => {
+      trackPointer(move, () => {
         cancelAnimationFrame(raf);
-        window.removeEventListener('mousemove', move);
-        window.removeEventListener('mouseup', up);
-        window.removeEventListener('blur', up);
         onEnd?.();
-      };
-      window.addEventListener('mousemove', move);
-      window.addEventListener('mouseup', up);
-      window.addEventListener('blur', up);
+      });
       raf = requestAnimationFrame(tick);
     },
     [posFromClient],
@@ -180,9 +173,8 @@ export function Grid(props: GridProps) {
     startDrag(e, (p) => live.current.onPointerDrag(p, mode));
   };
 
-  const onFillHandleDown = (e: React.MouseEvent) => {
+  const onFillHandleDown = (e: React.PointerEvent) => {
     e.preventDefault();
-    e.stopPropagation();
     const source = selectionRange(live.current.selection);
     let target: RangeBounds | null = null;
     startDrag(
@@ -196,6 +188,13 @@ export function Grid(props: GridProps) {
         if (target) live.current.onFill(source, target);
       },
     );
+  };
+
+  /** Touch has no drag-to-select (a drag scrolls), so the grip drags the selection's top-left corner instead. */
+  const onGripDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const fixed = { row: sel.r2, col: sel.c2 };
+    startDrag(e, (p) => live.current.onSelect({ anchor: fixed, head: p }));
   };
 
   const selectColumns = (col: number, shift: boolean) => {
@@ -224,20 +223,11 @@ export function Grid(props: GridProps) {
     }
   };
 
-  const onResizeStart = (e: React.MouseEvent, col: number) => {
+  const onResizeStart = (e: React.PointerEvent, col: number) => {
     e.preventDefault();
-    e.stopPropagation();
     const startX = e.clientX;
     const startW = colWidths[col];
-    const move = (ev: MouseEvent) => live.current.onColResize(col, Math.max(MIN_COL_WIDTH, startW + ev.clientX - startX));
-    const up = () => {
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mouseup', up);
-      window.removeEventListener('blur', up);
-    };
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', up);
-    window.addEventListener('blur', up);
+    trackPointer((ev) => live.current.onColResize(col, Math.max(MIN_COL_WIDTH, startW + ev.clientX - startX)));
   };
 
   // ----------------------------------------------------------- render helpers
@@ -295,7 +285,7 @@ export function Grid(props: GridProps) {
         onMouseDown={(e) => onHeaderMouseDown(e, 'col', c)}
       >
         {colToLetters(c)}
-        <div className="col-resizer" onMouseDown={(e) => onResizeStart(e, c)} />
+        <div className="col-resizer" onPointerDown={(e) => onResizeStart(e, c)} onMouseDown={stopMouse} />
       </div>,
     );
   }
@@ -366,17 +356,21 @@ export function Grid(props: GridProps) {
           <div className="active-cell" style={rect({ r1: active.row, c1: active.col, r2: active.row, c2: active.col })} />
           {fillPreview && <div className="fill-preview" style={rect(fillPreview)} />}
           {!editing && (
-            <div
-              className="fill-handle"
-              title="Drag to fill"
-              style={{ left: selRect.left + selRect.width - 4, top: selRect.top + selRect.height - 4 }}
-              onMouseDown={onFillHandleDown}
-            />
+            <>
+              <div className="sel-grip" style={{ left: selRect.left, top: selRect.top }} onPointerDown={onGripDown} onMouseDown={stopMouse} />
+              <div
+                className="fill-handle"
+                title="Drag to fill"
+                style={{ left: selRect.left + selRect.width, top: selRect.top + selRect.height }}
+                onPointerDown={onFillHandleDown}
+                onMouseDown={stopMouse}
+              />
+            </>
           )}
           {editing && (
             <div
               className="editor-anchor"
-              onMouseDown={(e) => e.stopPropagation()}
+              onMouseDown={stopMouse}
               onDoubleClick={(e) => e.stopPropagation()}
               style={{ left: layout.x(active.col), top: active.row * ROW_HEIGHT, minWidth: layout.width(active.col), height: ROW_HEIGHT }}
             >
@@ -387,4 +381,22 @@ export function Grid(props: GridProps) {
       </div>
     </div>
   );
+}
+
+/** Keeps a mouse press on a handle from also starting a selection in the cells or headers underneath. */
+const stopMouse = (e: React.MouseEvent) => e.stopPropagation();
+
+/** Follows one pointer until it is released or cancelled, or the window loses focus (Alt+Tab mid-drag). */
+function trackPointer(onMove: (e: PointerEvent) => void, onEnd?: () => void) {
+  const end = () => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', end);
+    window.removeEventListener('pointercancel', end);
+    window.removeEventListener('blur', end);
+    onEnd?.();
+  };
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', end);
+  window.addEventListener('blur', end);
 }

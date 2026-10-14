@@ -26,6 +26,7 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 - **Undo / redo** for every action, including fills, pastes and sheet loads. Replacing the whole sheet (a demo, a CSV import or Clear) puts an **Undo** button next to its message in the status bar, so there is no confirmation dialog.
 - Copy, cut and paste. Pasting inside the sheet re-targets formula references, and tab-separated data pastes in from Excel or Google Sheets.
 - Resizable columns, CSV import/export, and automatic saving to `localStorage`. Loading a sheet sizes each whole column to its longest value, so nothing starts cut off.
+- **Works by touch**: on a phone or tablet, a swipe scrolls the sheet, the round grip on the selection's top-left corner drags out a range, the fill handle and column edges drag with a finger, and every control is at least 44 px. On a phone the CSV actions and Clear share one **Sheet** menu, so the toolbar fits on one row.
 - A status bar that shows the engine at work: how many cells the last edit recalculated and how long it took, and how many cells are in the DOM out of 10,000,000.
 - Custom 404 and error pages styled like the app's own error diagnostics.
 - **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar and sheet, the active cell and its value are announced, autocomplete is a proper combobox, and every control shows a visible focus ring.
