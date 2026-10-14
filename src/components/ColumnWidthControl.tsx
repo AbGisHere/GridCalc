@@ -14,8 +14,9 @@ export function ColumnWidthControl({ column, width, onResize }: { column: string
       if (Number.isFinite(next) && next >= MIN_COL_WIDTH && next <= MAX_COL_WIDTH) onResize(next);
     }}>
       <label htmlFor={id}>Column {column} width (px)</label>
+      <p id={`${id}-hint`} className="column-width-hint">{MIN_COL_WIDTH}–{MAX_COL_WIDTH.toLocaleString('en-US')} px</p>
       <div>
-        <input id={id} type="number" min={MIN_COL_WIDTH} max={MAX_COL_WIDTH} step="1" required value={value} onChange={(e) => setValue(e.target.value)} />
+        <input id={id} aria-describedby={`${id}-hint`} type="number" min={MIN_COL_WIDTH} max={MAX_COL_WIDTH} step="1" required value={value} onChange={(e) => setValue(e.target.value)} />
         <button type="submit">Apply</button>
       </div>
     </form>

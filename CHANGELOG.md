@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-10-15
+
+### Changed
+- The column-width form shows its accepted range before submission and associates that guidance with the input for screen readers, using the existing theme's secondary-text styling.
+
 ## [0.3.3] - 2026-10-15
 
 ### Changed
