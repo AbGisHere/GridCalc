@@ -35,6 +35,7 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 - Custom 404 and error pages styled like the app's own error diagnostics.
 - A dismissible **demo guide** opens with the first sample and when loading a demo from Demos. Try a formula fix directly, or load 10k rows and jump between B2 and B10001 to compare recalculation along the dependency chain. Loading the scale demo explains that it replaces the sheet and can be undone.
 - Toolbar popups dismiss when keyboard focus leaves them; function search keeps a visible focus ring, and editing and panel controls provide hover feedback.
+- Keyboard focus outlines the sheet viewport separately from the selected cell, so a selected cell does not imply that keyboard input is still directed to the grid.
 - **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar and sheet, the active cell and its value are announced, status messages such as "Sheet cleared" are read out and stay up while you hover or focus them, an error cell is read with its one-line explanation, the toolbar, formula bar, sheet, diagnostics and status bar are each a landmark, autocomplete is a proper combobox, and every control shows a visible focus ring.
 
 **Formula engine**

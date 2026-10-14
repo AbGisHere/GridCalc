@@ -10,6 +10,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 - A dismissible demo guide puts the sample's formula fix within reach on narrow screens. The stress demo offers direct jumps to B2 and B10001 for comparing dependency recalculation; loading it explains sheet replacement and Undo.
 
+### Fixed
+- The sheet has a visible keyboard focus outline distinct from the active-cell selection, including a contrasting outline across the semi theme's dark headers and white cells.
+
 ## [0.2.7] - 2026-10-15
 
 ### Changed
