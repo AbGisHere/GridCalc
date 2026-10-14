@@ -1,0 +1,14 @@
+# GridCalc
+
+> A spreadsheet web app that runs entirely in the browser. It has a formula engine written from scratch (lexer, Pratt parser, tree-walking evaluator), dependency-aware incremental recalculation, and a virtualized 100,000 × 100 grid. Errors explain themselves with a caret under the problem and a suggested fix.
+
+- Data stays in the browser (localStorage); the app makes no network requests.
+- 96 built-in functions, including SUM, IF, VLOOKUP, XLOOKUP, INDEX/MATCH, SUMIFS and TEXTJOIN.
+- Circular references are detected and reported as #CIRC! with the cycle path.
+
+## Docs
+
+- [README](https://github.com/AbGisHere/GridCalc/blob/main/README.md): features, setup and keyboard shortcuts
+- [Architecture](https://github.com/AbGisHere/GridCalc/blob/main/docs/ARCHITECTURE.md): how the parser, evaluator and dependency graph work
+- [Functions](https://github.com/AbGisHere/GridCalc/blob/main/docs/FUNCTIONS.md): every supported function with its signature
+- [Changelog](https://github.com/AbGisHere/GridCalc/blob/main/CHANGELOG.md)
