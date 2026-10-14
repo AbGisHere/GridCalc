@@ -161,4 +161,4 @@ Planned features, including multiple sheets with cross-sheet references and shar
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md). Every push to `main` is a tagged release (`v0.X.Y`): the version in `package.json`, `package-lock.json` and the CHANGELOG is bumped together, and CI checks that they match. Release rules and the pre-release checklist are in [CLAUDE.md](CLAUDE.md).
+See [CHANGELOG.md](CHANGELOG.md). Every push to `main` is a tagged release (`v0.X.Y`): the version in `package.json`, `package-lock.json` and the CHANGELOG is bumped together, and CI checks that they match. Release rules, the pre-release checklist and the rules for coding agents (Codex, Claude Code and others) are in [AGENTS.md](AGENTS.md).

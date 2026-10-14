@@ -5,6 +5,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.25] - 2026-10-14
+
+### Added
+- `AGENTS.md` with the project rules for Codex and other coding agents: a short project overview, the commands to run, and the commit, release, code and pre-release rules. `CLAUDE.md` now imports it, so both tools follow one copy.
+
+### Changed
+- CI now rejects co-author trailers from any AI coding tool (Codex, OpenAI, ChatGPT, Copilot), not only Claude and Anthropic.
+
 ## [0.1.24] - 2026-10-14
 
 ### Changed

@@ -31,10 +31,10 @@ jobs:
           else
             echo "RANGE=$HEAD" >> "$GITHUB_ENV"
           fi
-      - name: Reject Claude co-author trailers
+      - name: Reject AI co-author trailers
         run: |
-          if git log --format='%H%n%B' "$RANGE" | grep -iE '^co-authored-by:.*(claude|anthropic)'; then
-            echo "::error::Commits must not include a Claude/Anthropic Co-Authored-By trailer."
+          if git log --format='%H%n%B' "$RANGE" | grep -iE '^co-authored-by:.*(claude|anthropic|codex|openai|chatgpt|copilot)'; then
+            echo "::error::Commits must not include an AI-tool Co-Authored-By trailer."
             exit 1
           fi
       - name: 'Enforce "type(vX.Y.Z): message" commit subjects'

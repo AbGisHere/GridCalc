@@ -43,7 +43,7 @@ Core requirements it must visibly satisfy:
 - Drag-to-fill, undo/redo for every action, copy/cut/paste with reference shifting, CSV import/export, resizable columns, autosave.
 - Every page has exactly one `<h1>`. Custom 404 and error pages use the shared `StatusPage` component and never show raw errors.
 - Strict security headers, including a Content-Security-Policy; no `dangerouslySetInnerHTML` or HTML rendering of user data. Any design change that needs a new external origin (fonts, images, scripts) must update the CSP deliberately.
-- Every push to `main` is a versioned release (see `CLAUDE.md`).
+- Every push to `main` is a versioned release (see `AGENTS.md`).
 - Undecided: sharing a sheet by link (planned in `ROADMAP.md`, no version assigned).
 
 ## Brand Commitments
