@@ -616,6 +616,11 @@ button {
   pointer-events: none;
 }
 
+/* Text spilling over empty neighbours, as in other spreadsheets: hides the column lines it crosses, not the row line or its own right edge. */
+.cell.spill {
+  background: linear-gradient(var(--bg), var(--bg)) 0 0 / calc(100% - 1px) 25px no-repeat;
+}
+
 .cell.num {
   text-align: right;
 }
@@ -978,7 +983,6 @@ button {
 /* ------------------------------------------------------------------ status bar */
 .status-bar {
   display: flex;
-  justify-content: space-between;
   gap: 16px;
   padding: 0 12px;
   height: 28px;
@@ -996,6 +1000,35 @@ button {
   display: flex;
   gap: 16px;
   overflow: hidden;
+}
+
+.status-left {
+  min-width: 0;
+}
+
+.status-right {
+  margin-left: auto;
+}
+
+.err-nav {
+  flex: none;
+  height: 24px;
+  margin-left: -6px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--error-soft);
+  color: var(--error);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.err-nav:hover {
+  border-color: var(--error);
+}
+
+.status-bar .err-nav b {
+  color: inherit;
 }
 
 .status-bar b {

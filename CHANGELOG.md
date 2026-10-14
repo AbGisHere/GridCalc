@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-10-14
+
+### Added
+- Advice for errors found while calculating: `#DIV/0!` and `#N/A` offer a one-click fix that wraps the formula in `IFERROR`, and `#VALUE!`, `#NUM!` and `#CIRC!` explain what to change. Errors passed on from another cell still point to their source instead.
+- The status bar shows how many cells hold an error, with a **Next** button that selects the next one. F8 and Shift+F8 do the same from the keyboard. On a phone, where the example errors are off-screen, this is the way in.
+- Long text spills over empty cells to its right instead of being cut off with an ellipsis, as in other spreadsheets.
+
+### Changed
+- The sample sheet lists the errors that have a one-click fix first (a typo in a function name, then a missing parenthesis), so the first red cell clicked shows the whole diagnosis. The hint above them reads "Click a red cell ↓" and fits its column, and labels that were cut off are shorter.
+
 ## [0.1.9] - 2026-10-14
 
 ### Added

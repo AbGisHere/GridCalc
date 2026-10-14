@@ -18,14 +18,23 @@ interface StatusBarProps {
   rendered: number;
   totalCells: number;
   usedCells: number;
+  /** How many cells hold an error; the button walks through them. */
+  errors: number;
+  onNextError(): void;
   message?: string;
 }
 
 const fmt = (n: number) => n.toLocaleString('en-US');
 
-export function StatusBar({ stats, recalc, rendered, totalCells, usedCells, message }: StatusBarProps) {
+export function StatusBar({ stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message }: StatusBarProps) {
   return (
     <footer className="status-bar">
+      {errors > 0 && (
+        <button className="err-nav" onClick={onNextError} title="Select the next error cell (F8, or Shift+F8 for the previous one)">
+          <b>{fmt(errors)}</b> error{errors === 1 ? '' : 's'}
+          <span aria-hidden> · </span>Next<span aria-hidden> ›</span>
+        </button>
+      )}
       <div className="status-left">
         {message ? (
           <span className="status-message">{message}</span>

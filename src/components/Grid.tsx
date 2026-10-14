@@ -42,6 +42,17 @@ const OVERSCAN_ROWS = 6;
 const OVERSCAN_COLS = 2;
 const EDGE = 28;
 
+let measureCtx: CanvasRenderingContext2D | null = null;
+
+/** Rendered width of a cell's text, so long text can spill over empty neighbours. */
+function textWidth(text: string): number {
+  if (!measureCtx) {
+    measureCtx = document.createElement('canvas').getContext('2d')!;
+    measureCtx.font = `13px ${getComputedStyle(document.body).fontFamily}`;
+  }
+  return measureCtx.measureText(text).width;
+}
+
 interface Viewport {
   top: number;
   left: number;
@@ -259,15 +270,26 @@ export function Grid(props: GridProps) {
       if (!rec) continue;
       const v = rec.value;
       const isErr = v instanceof CellError;
+      // Text runs on over empty cells to its right until it fits, as in other spreadsheets.
+      let width = layout.width(c);
+      let spill = false;
+      if (typeof v === 'string' && v) {
+        const need = textWidth(v) + 12;
+        for (let k = c + 1; width < need && k <= c1 && !engine.getRecord(r, k); k++) {
+          width += layout.width(k);
+          spill = true;
+        }
+      }
       const cls =
         'cell' +
         (typeof v === 'number' ? ' num' : typeof v === 'boolean' ? ' bool' : isErr ? ' err' : '') +
-        (rec.raw.startsWith('=') ? ' formula' : '');
+        (rec.raw.startsWith('=') ? ' formula' : '') +
+        (spill ? ' spill' : '');
       cells.push(
         <div
           key={`${r}:${c}`}
           className={cls}
-          style={{ left: layout.x(c), top: r * ROW_HEIGHT, width: layout.width(c), height: ROW_HEIGHT }}
+          style={{ left: layout.x(c), top: r * ROW_HEIGHT, width, height: ROW_HEIGHT }}
           title={isErr ? `${v.code} — ${v.origin ? `from ${v.origin}: ` : ''}${v.message}` : undefined}
         >
           {displayValue(v)}

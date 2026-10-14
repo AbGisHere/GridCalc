@@ -4,6 +4,7 @@ import { walk } from './ast';
 import { closestName, type Diagnostic } from './diagnostics';
 import { describeArity, FUNCTION_NAMES, getFunction } from './functions';
 import { tokenize, type Token } from './lexer';
+import type { ErrorCode } from './values';
 
 interface ParseResult {
   ast?: Node;
@@ -460,4 +461,30 @@ export function parseFormula(raw: string): ParseResult {
     fix = next.diagnostic.fix;
   }
   return { ...result, diagnostic: { ...d, fix: undefined } };
+}
+
+const RUNTIME_ADVICE: Partial<Record<ErrorCode, { suggestion: string; fallback?: string }>> = {
+  '#DIV/0!': {
+    suggestion: 'The highlighted divisor is 0 or an empty cell. Change it, or wrap the formula in IFERROR to show 0 instead.',
+    fallback: '0',
+  },
+  '#N/A': {
+    suggestion: 'The lookup value is not in the first column of the range. Check its spelling, or wrap the formula in IFERROR to show a message instead.',
+    fallback: '"Not found"',
+  },
+  '#VALUE!': { suggestion: 'The highlighted part needs a number but got text. Point it at a number, or convert the text with VALUE().' },
+  '#NUM!': { suggestion: 'The inputs to the highlighted part give a result that is not a valid number. Check them.' },
+  '#CIRC!': { suggestion: 'Change one cell in the loop so it no longer refers back, for example by typing a value instead of the reference.' },
+};
+
+/**
+ * Advice for a formula that parsed but evaluated to an error. Where the usual remedy is a fallback value,
+ * the fix wraps the formula in IFERROR, and like every fix it is only offered if it parses.
+ */
+export function explainRuntimeError(code: ErrorCode, formula: string): Pick<Diagnostic, 'suggestion' | 'fix'> {
+  const advice = RUNTIME_ADVICE[code];
+  if (!advice) return {};
+  const body = formula.slice(1).trim();
+  const fix = advice.fallback && !/^IFERROR\(/i.test(body) ? `=IFERROR(${body}, ${advice.fallback})` : undefined;
+  return { suggestion: advice.suggestion, fix: fix && !parseOnce(fix).diagnostic ? fix : undefined };
 }

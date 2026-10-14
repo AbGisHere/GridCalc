@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { caretLine, formatDiagnostic } from '../src/engine/diagnostics';
-import { parseFormula } from '../src/engine/parser';
+import { explainRuntimeError, parseFormula } from '../src/engine/parser';
 
 const diag = (f: string) => parseFormula(f).diagnostic;
 
@@ -116,5 +116,23 @@ describe('parser: diagnostics', () => {
 
   it('renders a caret under the problem', () => {
     expect(caretLine(4, 7)).toBe('    ^~~');
+  });
+});
+
+describe('parser: advice for errors found while calculating', () => {
+  it('offers an IFERROR fix for #DIV/0! and #N/A', () => {
+    expect(explainRuntimeError('#DIV/0!', '=E9/(C2-120)').fix).toBe('=IFERROR(E9/(C2-120), 0)');
+    expect(explainRuntimeError('#N/A', '=VLOOKUP("x", A1:B2, 2, FALSE)').fix).toBe('=IFERROR(VLOOKUP("x", A1:B2, 2, FALSE), "Not found")');
+  });
+
+  it('does not wrap a formula that already has IFERROR', () => {
+    const advice = explainRuntimeError('#DIV/0!', '=IFERROR(1/0, 1/0)');
+    expect(advice.suggestion).toBeTruthy();
+    expect(advice.fix).toBeUndefined();
+  });
+
+  it('gives advice without a fix where no fallback makes sense', () => {
+    expect(explainRuntimeError('#CIRC!', '=A1+1')).toEqual({ suggestion: expect.any(String), fix: undefined });
+    expect(explainRuntimeError('#REF!', '=A1')).toEqual({});
   });
 });

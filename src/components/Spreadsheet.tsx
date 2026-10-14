@@ -4,6 +4,9 @@ import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useReducer, us
 import {
   cellKey,
   inBounds,
+  keyCol,
+  keyRow,
+  LAST_CELL_A1,
   normalizeRange,
   parseA1,
   parseRangeA1,
@@ -16,7 +19,7 @@ import {
 } from '@/engine/address';
 import { SpreadsheetEngine, type CellEdit } from '@/engine/engine';
 import type { FnDef } from '@/engine/functions';
-import { parseFormula } from '@/engine/parser';
+import { explainRuntimeError, parseFormula } from '@/engine/parser';
 import { normalizeFormula, shiftFormula } from '@/engine/references';
 import { CellError, displayValue } from '@/engine/values';
 import { parseCSV, parseTSV, toCSV } from '@/state/csv';
@@ -80,6 +83,7 @@ const SHORTCUTS: [string, string][] = [
   ['Ctrl/⌘ + D / R', 'Fill down / right'],
   ['Drag the ▪ handle', 'Fill: copies formulas, continues series'],
   ['Click cells while typing a formula', 'Insert references'],
+  ['F8 / Shift + F8', 'Next / previous error'],
   ['F9', 'Recalculate everything'],
 ];
 
@@ -443,6 +447,9 @@ export default function Spreadsheet() {
     } else if (key === 'Escape') {
       setCopyRange(null);
       clipboard.current = null;
+    } else if (key === 'F8') {
+      e.preventDefault();
+      jumpToError(e.shiftKey);
     } else if (key === 'F9') {
       e.preventDefault();
       const s = engine.recalculateAll();
@@ -597,6 +604,18 @@ export default function Spreadsheet() {
     return true;
   };
 
+  /** Selects the next (or previous) error cell after the active one, wrapping around the sheet. */
+  const jumpToError = (back: boolean) => {
+    if (!errorKeys.length) return;
+    const here = cellKey(active.row, active.col);
+    const key = back ? (errorKeys.filter((k) => k < here).at(-1) ?? errorKeys.at(-1)!) : (errorKeys.find((k) => k > here) ?? errorKeys[0]);
+    const next = { row: keyRow(key), col: keyCol(key) };
+    if (edit) commitEdit();
+    setSel(single(next.row, next.col));
+    gridRef.current?.scrollIntoView(next);
+    gridRef.current?.focus();
+  };
+
   const insertFunction = (def: FnDef) => {
     if (edit && edit.value.startsWith('=')) {
       const c = activeInput()?.selectionStart ?? edit.value.length;
@@ -646,7 +665,7 @@ export default function Spreadsheet() {
       }),
     );
     replaceSheet(data, `Import ${file.name}`);
-    if (clipped) setToast(`Imported ${file.name}. Cells outside A1:${toA1(SHEET_ROWS - 1, SHEET_COLS - 1)} were left out.`);
+    if (clipped) setToast(`Imported ${file.name}. Cells outside A1:${LAST_CELL_A1} were left out.`);
   };
 
   /** F6 / Shift+F6 cycle focus between the toolbar, the name box and the sheet, as in desktop spreadsheets. */
@@ -683,6 +702,8 @@ export default function Spreadsheet() {
         start: v.span?.start,
         end: v.span?.end,
         origin: v.origin,
+        // An error passed on from another cell is fixed at its source, which the panel links to.
+        ...(v.origin ? {} : explainRuntimeError(v.code, rec.raw)),
       };
     }
     return null;
@@ -707,6 +728,16 @@ export default function Spreadsheet() {
     return s;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sel, engine, version]);
+
+  /** Every error cell in reading order, for the status bar's error count and F8 / Shift+F8. */
+  const errorKeys = useMemo(() => {
+    const keys: number[] = [];
+    engine.forEachInRange({ r1: 0, c1: 0, r2: SHEET_ROWS - 1, c2: SHEET_COLS - 1 }, (r, c, rec) => {
+      if (rec.value instanceof CellError) keys.push(cellKey(r, c));
+    });
+    return keys.sort((a, b) => a - b);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [engine, version]);
 
   const refMarks = useMemo(() => (edit ? formulaRefs(edit.value) : []), [edit]);
   const barValue = edit ? edit.value : (activeRec?.raw ?? '');
@@ -920,6 +951,8 @@ export default function Spreadsheet() {
         rendered={rendered}
         totalCells={SHEET_ROWS * SHEET_COLS}
         usedCells={engine.cellCount}
+        errors={errorKeys.length}
+        onNextError={() => jumpToError(false)}
         message={toast}
       />
     </div>

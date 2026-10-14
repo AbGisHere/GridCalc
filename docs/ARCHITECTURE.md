@@ -64,7 +64,7 @@ A recursive tree-walking interpreter over the AST.
 
 - **Values** (`values.ts`): `number | string | boolean | null (empty) | CellError`. Ranges evaluate to a `RangeValue`, a 2-D block with a label used in error messages.
 - **Coercion** (`coerce.ts`) follows spreadsheet rules: an empty cell is 0 or `""`, `TRUE` is 1, numeric text becomes a number, comparisons order number < text < boolean, and text compares case-insensitively. Numbers are compared at 15 significant digits, so `0.1+0.2=0.3` is `TRUE`.
-- **Errors are values.** They propagate through operators and functions. An error read through a reference is tagged with its `origin` cell, so the diagnostics panel can say *"This error comes from H2"* and link to that cell.
+- **Errors are values.** They propagate through operators and functions. An error read through a reference is tagged with its `origin` cell, so the diagnostics panel can say *"This error comes from H4"* and link to that cell.
 - **Runtime errors carry a span.** `=E9/(C2-120)` reports *"Division by zero: the divisor C2-120 evaluates to 0."* with the caret under `C2-120`.
 - **Function dispatch** (`functions/`): every function is a declarative `FnDef` with its arity, which arguments accept ranges, and an eager `call` or a lazy `lazy` implementation. Lazy functions (`IF`, `IFS`, `IFERROR`, `IFNA`, `SWITCH`, `CHOOSE`, `NOT`) receive thunks, so `IF(TRUE, 1, 1/0)` never evaluates the division. Functions abort by throwing a `CellError`, which the dispatcher catches and turns into a value. One registry drives parsing, validation, autocomplete, the in-app function browser and `docs/FUNCTIONS.md`.
 

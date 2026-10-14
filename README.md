@@ -27,6 +27,7 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 - **Drag-to-fill**: formulas are copied with relative references shifted, numeric series are continued, and numbered text counts up. Ctrl+D / Ctrl+R fill down / right.
 - **Undo / redo** for every action, including fills, pastes and sheet loads.
 - Copy, cut and paste. Pasting inside the sheet re-targets formula references, and tab-separated data pastes in from Excel or Google Sheets.
+- Long text spills over empty cells to its right instead of being cut off, as in other spreadsheets.
 - Resizable columns, CSV import/export, and automatic saving to `localStorage`.
 - Custom 404 and error pages styled like the app's own error diagnostics.
 - **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar and sheet, the active cell and its value are announced, autocomplete is a proper combobox, and every control shows a visible focus ring.
@@ -44,8 +45,10 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 
 **Error diagnostics**
 - Every error explains itself in a panel showing the formula with a **caret under the problem**, a **suggestion**, and, where possible, a verified **one-click fix**.
+- Calculation errors get advice too: `#DIV/0!` and `#N/A` offer a one-click `IFERROR` wrap, and `#VALUE!`, `#NUM!` and `#CIRC!` explain what to change.
 - Live diagnostics appear while you type.
 - Errors that flow in from other cells name their source and link to it.
+- The status bar counts the sheet's errors; **Next** (or F8 / Shift+F8) jumps from one to the next, so they're easy to reach on a phone too.
 
 ```
 Formula: =SUM(A1, B2
@@ -87,7 +90,7 @@ npm run dev          # http://localhost:3000
 | `npm run check:h1` | Check that every built page has exactly one `<h1>` (run after `build`) |
 | `npm run docs:functions` | Regenerate `docs/FUNCTIONS.md` from the function registry |
 
-On first load the app opens a **sample sheet** with working formulas and one example of each error type. Click the red cells to see their diagnostics. Use **10k-row stress test** in the toolbar to load 60,000 cells and 30,000 formulas.
+On first load the app opens a **sample sheet** with working formulas and one example of each error type. The errors with a one-click fix come first: click a red cell, or press **Next** in the status bar, to see its diagnosis. Use **10k-row stress test** in the toolbar to load 60,000 cells and 30,000 formulas.
 
 ## Deployment
 
@@ -144,6 +147,7 @@ public/                llms.txt
 | Ctrl/⌘ + Z, Ctrl/⌘ + Y (or Shift+Z) | Undo, redo |
 | Ctrl/⌘ + C / X / V | Copy, cut, paste |
 | Ctrl/⌘ + D / R | Fill down / right |
+| F8 / Shift + F8 | Next / previous error |
 | F9 | Recalculate everything (re-rolls `RAND`) |
 | Esc, then Tab | Leave the sheet |
 | F6 / Shift + F6 | Move between toolbar, formula bar and sheet |
