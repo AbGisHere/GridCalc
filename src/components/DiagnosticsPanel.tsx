@@ -2,6 +2,7 @@
 
 import { caretLine } from '@/engine/diagnostics';
 import type { ErrorCode } from '@/engine/values';
+import { Icon } from './Icon';
 
 export interface DiagnosticView {
   /** 'syntax' = formula can't be parsed; 'runtime' = it evaluated to an error; 'live' = while typing. */
@@ -39,7 +40,7 @@ export function DiagnosticsPanel({ view, onApplyFix, onGoTo, onDismiss }: Diagno
   const f = view.formula;
 
   return (
-    <aside className={`diag diag-${view.kind}`} role="status" aria-live="polite" aria-label="Diagnostics">
+    <aside className={`diag diag-${view.kind}`} aria-label="Diagnostics">
       <div className="diag-gutter">
         <span className="diag-code">{view.code}</span>
         <span className="diag-title">
@@ -92,7 +93,7 @@ export function DiagnosticsPanel({ view, onApplyFix, onGoTo, onDismiss }: Diagno
       </div>
 
       <button className="diag-close" onClick={onDismiss} aria-label="Hide diagnostics">
-        ×
+        <Icon name="close" />
       </button>
     </aside>
   );

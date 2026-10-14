@@ -1043,14 +1043,14 @@ button {
 
 .diag-close {
   align-self: start;
+  display: grid;
+  place-items: center;
   width: 32px;
   height: 32px;
   margin: 4px;
   border: 0;
   border-radius: 6px;
   background: none;
-  font-size: 18px;
-  line-height: 1;
   color: var(--muted);
   cursor: pointer;
 }
@@ -1188,12 +1188,13 @@ button {
 }
 
 .icon-btn {
+  display: grid;
+  place-items: center;
   width: 32px;
   height: 32px;
   border: 0;
   border-radius: 6px;
   background: none;
-  font-size: 18px;
   cursor: pointer;
   color: var(--muted);
 }

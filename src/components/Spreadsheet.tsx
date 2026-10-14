@@ -144,7 +144,7 @@ export default function Spreadsheet() {
   const barInputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const toolbarRef = useRef<HTMLElement>(null);
-  const barWrapRef = useRef<HTMLDivElement>(null);
+  const barWrapRef = useRef<HTMLElement>(null);
   const workspaceRef = useRef<HTMLElement>(null);
   /** Set by Escape on the grid: the next Tab leaves the sheet instead of moving to the next cell. */
   const tabOut = useRef(false);
@@ -781,13 +781,17 @@ export default function Spreadsheet() {
     return r.r1 === r.r2 && r.c1 === r.c2 ? activeAddress : rangeToA1(r);
   })();
 
-  /** What a screen reader hears when the selection or the active cell's value changes. */
+  /**
+   * What a screen reader hears when the selection, the active cell's value or its diagnosis changes. The diagnostics
+   * panel isn't a live region itself, so only this one-line summary is read, not its caret line and suggestion.
+   */
   const announcement = (() => {
-    if (edit) return '';
+    const diagnosis = showDiag ? `. ${diagView!.message}${diagView!.fix ? ' A one-click fix is in the diagnostics panel.' : ''}` : '';
+    if (edit) return showDiag ? `Problem in formula${diagnosis}` : '';
     if (selectionLabel !== activeAddress) return `${selectionLabel} selected, ${selStats.cells.toLocaleString()} cells`;
     if (!activeRec) return `${activeAddress}, blank`;
     const shown = `${activeAddress}, ${displayValue(activeRec.value)}${activeRec.value instanceof CellError ? ' error' : ''}`;
-    return activeRec.raw.startsWith('=') ? `${shown}, formula ${activeRec.raw}` : shown;
+    return (activeRec.raw.startsWith('=') ? `${shown}, formula ${activeRec.raw}` : shown) + diagnosis;
   })();
 
   const cellEditor = edit && (
@@ -958,7 +962,7 @@ export default function Spreadsheet() {
         </div>
       </header>
 
-      <div className="bar-wrap" ref={barWrapRef}>
+      <section className="bar-wrap" ref={barWrapRef} aria-label="Formula bar">
         <FormulaBar
           inputRef={barInputRef}
           address={selectionLabel}
@@ -981,7 +985,7 @@ export default function Spreadsheet() {
             <FormulaAssist id={assistId} info={assist} selected={assistSel} onPick={acceptSuggestion} />
           </div>
         )}
-      </div>
+      </section>
 
       <main className="workspace" ref={workspaceRef}>
         <div className="grid-host" onCopy={(e) => onCopy(e, false)} onCut={(e) => onCopy(e, true)} onPaste={onPaste}>

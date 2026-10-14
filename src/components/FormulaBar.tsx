@@ -89,7 +89,7 @@ export function FormulaBar(props: FormulaBarProps) {
         <input
           ref={setRefs}
           className={'fb-input' + (isFormula ? ' highlighted' : '')}
-          aria-label="Formula bar"
+          aria-label="Cell contents"
           {...props.combobox}
           value={value}
           spellCheck={false}

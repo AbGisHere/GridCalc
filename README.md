@@ -31,7 +31,7 @@ A spreadsheet web app built with **TypeScript, Next.js and React**. The formula 
 - A status bar that shows the engine at work: how many cells the last edit recalculated and how long it took, and how many cells are in the DOM out of 10,000,000. Every edit, undo and redo also gets a short message such as *"Edit B2: 10,008 formulas recalculated in 17.3 ms"*.
 - A **recalculation wave**: after an edit, the recalculated cells light up one dependency level after another, so you can see which cells depended on it. With reduce-motion on it's a single gentle fade, and the copied range's marching ants stand still.
 - Custom 404 and error pages styled like the app's own error diagnostics.
-- **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar and sheet, the active cell and its value are announced, status messages such as "Sheet cleared" are read out and stay up while you hover or focus them, autocomplete is a proper combobox, and every control shows a visible focus ring.
+- **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar and sheet, the active cell and its value are announced, status messages such as "Sheet cleared" are read out and stay up while you hover or focus them, an error cell is read with its one-line explanation, the toolbar, formula bar, sheet, diagnostics and status bar are each a landmark, autocomplete is a proper combobox, and every control shows a visible focus ring.
 
 **Formula engine**
 - **96 functions** including `SUM`, `IF`, `VLOOKUP`, `XLOOKUP`, `INDEX`/`MATCH`, `SUMIFS`, `COUNTIFS`, `TEXTJOIN` and `TEXT`. See [docs/FUNCTIONS.md](docs/FUNCTIONS.md) for the full list.

@@ -1,7 +1,7 @@
 {
   "name": "gridcalc",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A virtualized spreadsheet web app with a custom formula parser, evaluator and dependency-aware recalculation engine.",
   "type": "module",
   "scripts": {

@@ -4,6 +4,7 @@ const PATHS = {
   import: 'M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 11v2.5h11V11',
   export: 'M8 10V2M4.5 5.5 8 2l3.5 3.5M2.5 11v2.5h11V11',
   chevron: 'M4.5 6.5 8 10l3.5-3.5',
+  close: 'M4 4l8 8M12 4l-8 8',
 };
 
 /** 16px stroke icon in the current text colour; decorative, so the button's text names the action. */

@@ -5,6 +5,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-15
+
+### Fixed
+- Screen readers no longer re-read the whole diagnostics panel, caret line and suggestion included, whenever it changes. The error's one-line explanation is read with the cell instead, such as "H2, #NAME? error, formula =SUMM(C2:C7). Unknown function 'SUMM'. A one-click fix is in the diagnostics panel.", and while typing a formula the problem is read on its own.
+- The diagnostics panel is a landmark again, so screen-reader users can jump straight to it.
+- The formula bar is now a landmark of its own ("Formula bar"), so moving through the page by landmark no longer skips the name box and the formula input. The formula input is now labelled "Cell contents".
+
+### Changed
+- The close buttons on the diagnostics panel and the function list use a drawn icon that matches the rest of the toolbar's icons, instead of a "×" character.
+
 ## [0.2.0] - 2026-10-14
 
 Release checklist and security review passed: one `<h1>` per page, custom 404 and error pages, favicon, robots.txt, sitemap, llms.txt and page metadata in place; `npm audit` clean; security headers present on the built app; CSV export still neutralizes formula injection.

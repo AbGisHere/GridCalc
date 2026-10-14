@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { FUNCTIONS, type Category, type FnDef } from '@/engine/functions';
+import { Icon } from './Icon';
 
 const ORDER: Category[] = ['Math', 'Statistical', 'Logical', 'Lookup', 'Text', 'Information'];
 
@@ -26,7 +27,7 @@ export function FunctionsPanel({ onInsert, onClose }: FunctionsPanelProps) {
           Functions <span className="count">{FUNCTIONS.length}</span>
         </h2>
         <button className="icon-btn" onClick={onClose} aria-label="Close function list">
-          ×
+          <Icon name="close" />
         </button>
       </header>
       <input className="fn-search" placeholder="Search functions…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
