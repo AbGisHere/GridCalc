@@ -5,6 +5,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-14
+
+### Added
+- Custom 404 and error pages (`not-found`, `error`, `global-error`) in the style of the app's error diagnostics, replacing the default Next.js/Vercel pages. They show an error digest, never raw messages or stack traces.
+- `npm run check:h1`, which runs in CI and fails unless every built page has exactly one `<h1>`.
+
+### Fixed
+- Every page now has exactly one `<h1>`. Before this, no page had one. The brand name in the toolbar and the loading screen is the `<h1>`, and on narrow screens it is visually hidden instead of removed, so it stays in the accessibility tree.
+
 ## [0.1.0] - 2026-10-14
 
 First public release.
@@ -24,5 +33,6 @@ First public release.
 - CSV export neutralizes text that other spreadsheet apps would run as a formula (CSV injection).
 - Sheet data and column widths loaded from `localStorage` are validated before use.
 
-[Unreleased]: https://github.com/AbGisHere/GridCalc/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/AbGisHere/GridCalc/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/AbGisHere/GridCalc/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/AbGisHere/GridCalc/releases/tag/v0.1.0
