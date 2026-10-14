@@ -155,7 +155,7 @@ public/                llms.txt
 
 ## Roadmap
 
-Planned features, starting with sharing a sheet by link, are in [ROADMAP.md](ROADMAP.md). [PRODUCT.md](PRODUCT.md) records who the app is for, what it must prove and the principles behind design decisions.
+Planned features, including multiple sheets with cross-sheet references and sharing a sheet by link, are in [ROADMAP.md](ROADMAP.md). [PRODUCT.md](PRODUCT.md) records who the app is for, what it must prove and the principles behind design decisions.
 
 ## Changelog
 

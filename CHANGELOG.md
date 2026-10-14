@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.12] - 2026-10-14
+
+### Added
+- `ROADMAP.md`: multiple sheets with cross-sheet references in Excel's `Sheet!A1` syntax. Unknown sheet names get a caret and a "did you mean" fix, errors from other sheets link to their source, and loops across sheets are detected. Planned before share-by-link.
+
 ## [0.1.11] - 2026-10-14
 
 ### Added

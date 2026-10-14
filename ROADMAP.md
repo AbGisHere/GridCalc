@@ -24,3 +24,14 @@ Double-clicking the resize handle on a column header's right edge sets that colu
 - **Selection.** With several whole columns selected, double-clicking any of their edges fits each of them, as in Excel.
 - **Undo.** Column widths are not in the undo history yet. Decide whether auto-fit (and resizing in general) should be undoable.
 - **Rows.** Rows have a fixed height and no resize handle, so auto-fit applies to columns only.
+
+### Multiple sheets and cross-sheet references
+
+Several sheets in one workbook, shown as tabs, with formulas that read other sheets: `=SUM(A1:A10, Sales!A1:A10)`, or `'Q1 sales'!B2` when the name has spaces. This is the syntax Excel and Google Sheets use, so formulas copied from them keep working. (`&` can't be the marker: it already joins text.)
+
+- **Engine.** Cell keys gain a sheet id. The dependency graph and range index work across sheets, so editing `Sales!A1` recalculates the formulas on other sheets that read it, and Tarjan's SCC finds loops that pass through several sheets.
+- **Diagnostics.** An unknown sheet gets a caret under its name and a "did you mean" fix, like an unknown function: `Unknown sheet 'Sales2'. Did you mean Sales?`. An error passed on from another sheet names and links to `Sales!B4`.
+- **Renaming and deleting.** Renaming a sheet rewrites every reference to it. Deleting one turns those references into `#REF!` and can be undone.
+- **Editing.** Autocomplete offers sheet names after `=` or `,`. Clicking a cell on another tab while typing a formula inserts `Sales!B4`.
+- **Storage.** The saved format gains a list of sheets; v1 saves load as a single sheet. CSV import and export work on the active sheet.
+- **Order.** Build this before share-by-link, so a shared link carries the whole workbook from the start.
