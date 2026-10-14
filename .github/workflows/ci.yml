@@ -20,30 +20,25 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - name: Reject Claude co-author trailers
+      - name: Commit range of this push or PR
         env:
           BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
         run: |
-          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
-            RANGE="$HEAD"
+          # New branches and force-pushes have no usable base, so check the whole history.
+          if git cat-file -e "$BASE^{commit}" 2>/dev/null && git merge-base --is-ancestor "$BASE" "$HEAD"; then
+            echo "RANGE=$BASE..$HEAD" >> "$GITHUB_ENV"
           else
-            RANGE="$BASE..$HEAD"
+            echo "RANGE=$HEAD" >> "$GITHUB_ENV"
           fi
+      - name: Reject Claude co-author trailers
+        run: |
           if git log --format='%H%n%B' "$RANGE" | grep -iE '^co-authored-by:.*(claude|anthropic)'; then
             echo "::error::Commits must not include a Claude/Anthropic Co-Authored-By trailer."
             exit 1
           fi
       - name: 'Enforce "type(vX.Y.Z): message" commit subjects'
-        env:
-          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
-          HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
         run: |
-          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
-            RANGE="$HEAD"
-          else
-            RANGE="$BASE..$HEAD"
-          fi
           PATTERN='^(feat|fix|docs|refactor|test|ci|chore|security|perf|style|build|revert)\(v[0-9]+\.[0-9]+\.[0-9]+\)!?: .+'
           BAD=$(git log --no-merges --format='%an%x09%s' "$RANGE" | grep -v '^dependabot\[bot\]' | cut -f2- | grep -vE "$PATTERN" || true)
           if [ -n "$BAD" ]; then
