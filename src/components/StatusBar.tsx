@@ -70,7 +70,7 @@ export function StatusBar({ stats, recalc, rendered, totalCells, usedCells, erro
             Count <b>{fmt(stats.count)}</b>
           </span>
         ) : (
-          <span className="muted">Ready</span>
+          <span>Ready</span>
         )}
       </div>
       <div className="status-right" aria-label="Engine">

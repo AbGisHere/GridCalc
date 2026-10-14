@@ -251,8 +251,7 @@ export function Grid(props: GridProps) {
       const isErr = v instanceof CellError;
       const cls =
         'cell' +
-        (typeof v === 'number' ? ' num' : typeof v === 'boolean' ? ' bool' : isErr ? ' err' : '') +
-        (rec.raw.startsWith('=') ? ' formula' : '');
+        (typeof v === 'number' ? ' num' : typeof v === 'boolean' ? ' bool' : isErr ? ' err' : '');
       cells.push(
         <div
           key={`${r}:${c}`}

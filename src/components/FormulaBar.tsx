@@ -79,13 +79,11 @@ export function FormulaBar(props: FormulaBarProps) {
       <div className={'fb-field' + (props.editing ? ' editing' : '')}>
         {isFormula && (
           <div className="fb-overlay" ref={overlayRef} aria-hidden>
-            <span className="fb-overlay-inner">
-              {segments.map((s, i) => (
-                <span key={i} className={`tok-${s.kind}`} style={s.color ? { color: s.color } : undefined}>
-                  {s.text}
-                </span>
-              ))}
-            </span>
+            {segments.map((s, i) => (
+              <span key={i} className={`tok-${s.kind}`} style={s.color ? { color: s.color } : undefined}>
+                {s.text}
+              </span>
+            ))}
           </div>
         )}
         <input

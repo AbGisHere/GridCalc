@@ -135,7 +135,7 @@ button {
   text-align: center;
 }
 
-.status-code {
+.status-page .status-code {
   margin: 0;
   font-family: var(--mono);
   font-size: 15px;
@@ -151,9 +151,8 @@ button {
   font-family: var(--mono);
   font-size: var(--text-base);
   text-align: left;
-  white-space: pre;
+  white-space: pre-wrap;
   max-width: 100%;
-  overflow-x: auto;
 }
 
 .status-page h1 {
@@ -478,8 +477,9 @@ button {
   z-index: 30;
 }
 
+/* At the gutter, less the popup's border, so the suggestions' names line up with the formula bar's text. */
 .assist-anchor.bar {
-  left: 176px;
+  left: calc(var(--gutter) - 1px);
 }
 
 .assist {
@@ -1331,6 +1331,10 @@ button {
   .cell-editor,
   .fn-search {
     font-size: 16px;
+  }
+  /* Keyboard hints mean nothing without a keyboard; a tap inserts the suggestion. */
+  .assist-help {
+    display: none;
   }
   .formula-bar {
     height: 44px;

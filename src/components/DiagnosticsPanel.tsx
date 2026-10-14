@@ -52,11 +52,9 @@ export function DiagnosticsPanel({ view, onApplyFix, onGoTo, onDismiss }: Diagno
 
         {hasSpan && (
           <pre className="diag-code-block" aria-label="Formula with error position">
-            <span className="diag-formula">
-              {f.slice(0, start)}
-              <mark>{f.slice(start, Math.max(end, start)) || ' '}</mark>
-              {f.slice(Math.max(end, start))}
-            </span>
+            {f.slice(0, start)}
+            <mark>{f.slice(start, Math.max(end, start)) || ' '}</mark>
+            {f.slice(Math.max(end, start))}
             {'\n'}
             <span className="diag-caret">{caretLine(start, end)}</span>
             {view.related && (

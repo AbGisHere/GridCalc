@@ -5,6 +5,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.1.18] - 2026-10-14
+
+### Fixed
+- Function suggestions under the formula bar line up with the formula's text; they sat 16 px to the right. Their position now comes from the `--gutter` token instead of a fixed number.
+- On the 404 and error pages, the error code (`#REF!`, `#ERROR!`) is red as intended; a more specific rule had turned it grey. The explanation under the formula wraps on a phone instead of being cut off mid-word.
+
+### Changed
+- On touch screens the suggestion list drops its keyboard hints (↑↓, Tab, Enter, Esc); a tap inserts a suggestion.
+
+### Removed
+- Class names that no style or script used (`muted`, `formula`, `fb-overlay-inner`, `diag-formula`), with the wrapper elements that only carried them.
+
 ## [0.1.17] - 2026-10-14
 
 ### Added
