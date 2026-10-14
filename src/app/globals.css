@@ -1281,11 +1281,11 @@ button {
 .status-left,
 .status-right {
   display: flex;
-  gap: 16px;
   overflow: hidden;
 }
 
 .status-left {
+  gap: 16px;
   min-width: 0;
   align-items: center;
 }
@@ -1293,6 +1293,10 @@ button {
 .status-right {
   margin-left: auto;
   gap: 20px;
+}
+
+.total-short {
+  display: none;
 }
 
 .metric-label {
@@ -1470,6 +1474,29 @@ button {
   }
 }
 
+/* Phones narrower than an iPhone (390px) show 10,000,000 as 10M, so both engine metrics stay on one line even after a 10,000-cell recalculation. */
+@media (max-width: 389px) {
+  .total-full {
+    display: none;
+  }
+  .total-short {
+    display: inline;
+  }
+  .status-right {
+    gap: 12px;
+  }
+}
+
+/* Below 360px the recalc metric also drops its unit: "RECALC 10,008 in 26 ms". */
+@media (max-width: 359px) {
+  .metric-unit {
+    display: none;
+  }
+  .metric-label {
+    margin-right: 4px;
+  }
+}
+
 /* On touch screens of any width: iOS Safari zooms the page into any focused input under 16px, and controls a thumb uses are at least 44px. */
 @media (pointer: coarse) {
   .name-box,
@@ -1505,8 +1532,21 @@ button {
     width: 44px;
     height: 44px;
   }
+  /* The bar grows to 44px plus its top border so the buttons aren't cropped; they look 36px tall, and the invisible ::after (measured from inside the 1px border) makes the tap area 44px. */
+  .status-bar {
+    height: auto;
+    min-height: 45px;
+  }
   .err-nav,
   .status-undo {
+    position: relative;
+    z-index: 1;
     height: 36px;
+  }
+  .err-nav::after,
+  .status-undo::after {
+    content: '';
+    position: absolute;
+    inset: -5px 0;
   }
 }

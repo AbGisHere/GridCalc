@@ -5,6 +5,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-14
+
+Release checklist and security review passed: one `<h1>` per page, custom 404 and error pages, favicon, robots.txt, sitemap, llms.txt and page metadata in place; `npm audit` clean; security headers present on the built app; CSV export still neutralizes formula injection.
+
+### Fixed
+- On touch screens wider than a phone in portrait (a phone turned sideways, or a tablet), the status bar was 28px tall, so its 36px error and Undo buttons were cropped at the top and bottom. On touch screens the bar now grows to fit them.
+- The error and Undo buttons in the status bar now have a full 44px tap area on touch screens, as every other control does. They still look 36px tall.
+- On phones narrower than an iPhone (under 390px, such as 320, 360 and 375px), the engine metrics no longer run off the edge of the status bar, even after a 10,000-cell recalculation: "of 10,000,000" shows as "of 10M", and below 360px the recalc metric reads "10,008 in 26 ms" without the word "cells".
+
 ## [0.1.25] - 2026-10-14
 
 ### Added

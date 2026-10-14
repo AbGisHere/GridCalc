@@ -29,6 +29,7 @@ interface StatusBarProps {
 }
 
 const fmt = (n: number) => n.toLocaleString('en-US');
+const compact = new Intl.NumberFormat('en-US', { notation: 'compact' });
 
 export function StatusBar({ stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message, onUndo, onHold }: StatusBarProps) {
   return (
@@ -90,13 +91,15 @@ export function StatusBar({ stats, recalc, rendered, totalCells, usedCells, erro
         {recalc && (
           <span className="metric" title="Only cells downstream of an edit are re-evaluated">
             <span className="metric-label">Recalc</span>
-            <b>{fmt(recalc.evaluated)}</b> cell{recalc.evaluated === 1 ? '' : 's'} in <b>{recalc.ms.toFixed(recalc.ms < 10 ? 2 : 0)} ms</b>
+            <b>{fmt(recalc.evaluated)}</b>
+            <span className="metric-unit"> cell{recalc.evaluated === 1 ? '' : 's'}</span> in <b>{recalc.ms.toFixed(recalc.ms < 10 ? 2 : 0)} ms</b>
             {recalc.cycles > 0 && <span className="warn"> · {recalc.cycles} circular</span>}
           </span>
         )}
         <span className="metric" title="Virtualization: only visible cells exist in the DOM">
           <span className="metric-label">DOM cells</span>
-          <b>{fmt(rendered)}</b> of {fmt(totalCells)}
+          <b>{fmt(rendered)}</b> of <span className="total-full">{fmt(totalCells)}</span>
+          <span className="total-short">{compact.format(totalCells)}</span>
         </span>
         <span className="metric metric-used">
           <span className="metric-label">Used</span>
