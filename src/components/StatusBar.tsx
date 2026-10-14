@@ -79,14 +79,12 @@ export function StatusBar({ saveState, onExport, stats, recalc, rendered, totalC
               Average <b>{formatNumber(stats.sum / stats.numeric)}</b>
             </span>
             <span>
-              Min <b>{formatNumber(stats.min)}</b>
-            </span>
-            <span>
-              Max <b>{formatNumber(stats.max)}</b>
-            </span>
-            <span>
               Count <b>{fmt(stats.count)}</b>
             </span>
+            <details className="selection-details">
+              <summary>More stats</summary>
+              <span>Min <b>{formatNumber(stats.min)}</b> · Max <b>{formatNumber(stats.max)}</b></span>
+            </details>
           </>
         ) : stats && stats.count > 0 ? (
           <span>
@@ -96,7 +94,7 @@ export function StatusBar({ saveState, onExport, stats, recalc, rendered, totalC
           <span>Ready</span>
         )}
       </div>
-      <div className="status-right" aria-label="Engine">
+      <div className="status-right" role="group" aria-label="Engine">
         {recalc && (
           <span className="metric" title="Only cells downstream of an edit are re-evaluated">
             <span className="metric-label">Recalc</span>

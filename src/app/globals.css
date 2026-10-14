@@ -1494,22 +1494,22 @@ button {
 /* ------------------------------------------------------------------ status bar */
 .status-bar {
   display: flex;
-  gap: 16px;
-  padding: 0 12px;
-  height: 28px;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 4px 12px;
+  min-height: 28px;
   align-items: center;
   border-top: 1px solid var(--border);
   background: var(--chrome);
   color: var(--chrome-muted);
   font-size: var(--text-sm);
-  white-space: nowrap;
-  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .status-left,
 .status-right {
   display: flex;
-  overflow: hidden;
+  flex-wrap: wrap;
 }
 
 .save-state {
@@ -1555,14 +1555,33 @@ button {
 }
 
 .status-left {
-  gap: 16px;
+  flex: 1 1 24ch;
+  gap: 4px 16px;
   min-width: 0;
   align-items: center;
 }
 
 .status-right {
   margin-left: auto;
-  gap: 20px;
+  gap: 4px 20px;
+  min-width: 0;
+}
+
+.selection-details summary {
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.selection-details > span {
+  display: block;
+  padding-bottom: 4px;
+}
+
+@media (any-pointer: coarse), (max-width: 760px) {
+  .selection-details summary {
+    min-height: 44px;
+    align-content: center;
+  }
 }
 
 .total-short {
@@ -1626,9 +1645,7 @@ button {
 .status-message {
   color: var(--accent-strong);
   font-weight: 550;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
 }
 
 .status-bar .warn {

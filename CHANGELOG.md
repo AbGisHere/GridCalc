@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-10-15
+
+### Changed
+- The footer wraps status messages and engine metrics instead of clipping them. Numeric selections show Sum, Average and Count first, with Min and Max available under More stats.
+
 ## [0.3.4] - 2026-10-15
 
 ### Changed
