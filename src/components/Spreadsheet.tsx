@@ -24,6 +24,7 @@ import { explainRuntimeError, parseFormula } from '@/engine/parser';
 import { normalizeFormula, shiftFormula } from '@/engine/references';
 import { CellError, displayValue } from '@/engine/values';
 import { parseCSV, parseTSV, toCSV } from '@/state/csv';
+import { MAX_BACKUP_BYTES, parseBackup, toBackup } from '@/state/backup';
 import { buildFill, FillLimitError } from '@/state/fill';
 import { History } from '@/state/history';
 import { SAMPLE_SHEET, stressSheet } from '@/state/samples';
@@ -59,6 +60,15 @@ function parseSavedSheet(json: string): Record<string, string> | null {
 }
 const MAX_CLIPBOARD_CELLS = 250_000;
 const MAX_IMPORT_MB = 20;
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
 
 interface EditState {
   row: number;
@@ -133,6 +143,10 @@ export default function Spreadsheet() {
   const cellInputRef = useRef<HTMLInputElement>(null);
   const barInputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const backupFileRef = useRef<HTMLInputElement>(null);
+  const backupRequest = useRef(0);
+  const latestEdit = useRef(edit);
+  latestEdit.current = edit;
   const toolbarRef = useRef<HTMLElement>(null);
   const barWrapRef = useRef<HTMLElement>(null);
   const workspaceRef = useRef<HTMLElement>(null);
@@ -692,12 +706,36 @@ export default function Spreadsheet() {
       for (let c = 0; c <= b.c2; c++) row.push(displayValue(engine.getValue(r, c)));
       rows.push(row);
     }
-    const url = URL.createObjectURL(new Blob([toCSV(rows)], { type: 'text/csv' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'gridcalc.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(new Blob([toCSV(rows)], { type: 'text/csv' }), 'gridcalc.csv');
+  };
+
+  const exportBackup = () => {
+    const cells = engine.toJSON();
+    if (edit) cells[toA1(edit.row, edit.col)] = edit.value;
+    const blob = new Blob([toBackup(cells)], { type: 'application/json' });
+    if (blob.size > MAX_BACKUP_BYTES) return say('This backup exceeds 20 MB. Split the sheet into smaller sheets before downloading a backup.');
+    downloadBlob(blob, 'sheet.gridcalc.json');
+    say('Backup download started. It preserves cell contents and formulas, including the current edit.');
+  };
+
+  const restoreBackup = async (file: File) => {
+    const request = ++backupRequest.current;
+    if (file.size > MAX_BACKUP_BYTES) return say('This backup exceeds 20 MB. Choose a smaller GridCalc backup. Your sheet has not changed.');
+    const beforeVersion = engine.version;
+    const beforeEdit = latestEdit.current;
+    let cells: Record<string, string> | null;
+    try {
+      cells = parseBackup(await file.text());
+    } catch {
+      cells = null;
+    }
+    if (request !== backupRequest.current) return;
+    if (!cells) return say('Could not restore this file. Choose a GridCalc .gridcalc.json backup (version 1). Your sheet has not changed.');
+    if (engine.version !== beforeVersion || latestEdit.current !== beforeEdit) {
+      return say('Your sheet changed while the backup was opening. Choose Restore backup again when ready.');
+    }
+    if (edit) commitEdit();
+    replaceSheet(cells, 'Restore backup');
   };
 
   const importCSV = async (file: File) => {
@@ -848,6 +886,8 @@ export default function Spreadsheet() {
   );
 
   const sheetActions: { label: string; detail: string; run(): void; disabled?: boolean }[] = [
+    { label: 'Download backup', detail: 'Keep cell contents and formulas in a GridCalc file', run: exportBackup },
+    { label: 'Restore backup', detail: 'Replace the sheet with a GridCalc backup; Undo restores it', run: () => backupFileRef.current?.click() },
     { label: 'Import CSV', detail: 'Replace the sheet with a .csv file', run: () => fileRef.current?.click() },
     { label: 'Export values as CSV', detail: 'Download calculated values; formulas are not included', run: exportCSV },
     { label: 'Clear', detail: 'Empty the sheet; Undo brings it back', run: () => replaceSheet({}, 'Clear sheet'), disabled: !engine.cellCount },
@@ -964,6 +1004,17 @@ export default function Spreadsheet() {
             onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) void importCSV(f);
+              e.target.value = '';
+            }}
+          />
+          <input
+            ref={backupFileRef}
+            type="file"
+            accept=".json,application/json"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void restoreBackup(f);
               e.target.value = '';
             }}
           />
@@ -1096,6 +1147,7 @@ export default function Spreadsheet() {
       <StatusBar
         saveState={saveFailed ? 'failed' : !loaded || savedVersion !== version ? 'saving' : 'saved'}
         onExport={exportCSV}
+        onBackup={exportBackup}
         stats={selStats}
         recalc={engine.lastStats}
         rendered={rendered}

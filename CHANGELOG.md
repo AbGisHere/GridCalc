@@ -5,6 +5,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.7] - 2026-10-15
+
+### Added
+- Download and restore local GridCalc backups that preserve raw cell contents and formulas, including the current editor contents on download. Restore validates the whole versioned file, enforces a 20 MB limit, preserves newer work if the sheet changes while reading, and uses the undoable replacement path.
+- Failed autosave offers a formula-preserving backup alongside values-only CSV export. README documents backup contents, restore and CSV differences.
+
 ## [0.3.6] - 2026-10-15
 
 ### Changed

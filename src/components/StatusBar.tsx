@@ -15,6 +15,7 @@ export interface SelectionStats {
 interface StatusBarProps {
   saveState: 'saving' | 'saved' | 'failed';
   onExport(): void;
+  onBackup(): void;
   stats: SelectionStats | null;
   recalc: RecalcStats | null;
   rendered: number;
@@ -33,7 +34,7 @@ interface StatusBarProps {
 const fmt = (n: number) => n.toLocaleString('en-US');
 const compact = new Intl.NumberFormat('en-US', { notation: 'compact' });
 
-export function StatusBar({ saveState, onExport, stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message, onUndo, onHold }: StatusBarProps) {
+export function StatusBar({ saveState, onExport, onBackup, stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message, onUndo, onHold }: StatusBarProps) {
   return (
     <footer className="status-bar">
       <p className="sr-only" role="status">
@@ -42,9 +43,14 @@ export function StatusBar({ saveState, onExport, stats, recalc, rendered, totalC
       <div className={`save-state ${saveState}`}>
         <span role="status">
           {saveState === 'failed' ? 'Not saved' : saveState === 'saving' ? 'Saving…' : 'Saved in this browser'}
-          {saveState === 'failed' && <span className="save-detail"> — Browser storage is unavailable or full. CSV preserves values, not formulas.</span>}
+          {saveState === 'failed' && <span className="save-detail"> — Browser storage is unavailable or full. Download a backup to keep cell contents and formulas.</span>}
         </span>
-        {saveState === 'failed' && <button className="status-undo" onClick={onExport}>Export values as CSV</button>}
+        {saveState === 'failed' && (
+          <>
+            <button className="status-undo" onClick={onBackup}>Download backup</button>
+            <button className="status-undo" onClick={onExport}>Export values as CSV</button>
+          </>
+        )}
       </div>
       {errors > 0 && (
         <button className="err-nav" onClick={onNextError} title="Select the next error cell (F8, or Shift+F8 for the previous one)">

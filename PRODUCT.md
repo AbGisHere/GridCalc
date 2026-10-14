@@ -40,7 +40,7 @@ Core requirements it must visibly satisfy:
 - 100,000 × 100 grid (10,000,000 addressable cells), about 600 mounted at a time.
 - 96 functions; `SUM`, `IF`, `VLOOKUP`, `XLOOKUP`, `INDEX`/`MATCH`, `SUMIFS`, `TEXTJOIN` and `TEXT` among them.
 - Formula bar with syntax highlighting, colour-matched reference borders, click-to-insert references, autocomplete and signature hints.
-- Drag-to-fill, undo/redo for every action, copy/cut/paste with reference shifting, CSV import/export, resizable columns, autosave.
+- Drag-to-fill, undo/redo for every action, copy/cut/paste with reference shifting, CSV import and values-only export, formula-preserving backup/restore, resizable columns, autosave. Backups preserve raw cell contents; restored columns fit their contents.
 - Every page has exactly one `<h1>`. Custom 404 and error pages use the shared `StatusPage` component and never show raw errors.
 - Strict security headers, including a Content-Security-Policy; no `dangerouslySetInnerHTML` or HTML rendering of user data. Any design change that needs a new external origin (fonts, images, scripts) must update the CSP deliberately.
 - Every push to `main` is a versioned release (see `AGENTS.md`).

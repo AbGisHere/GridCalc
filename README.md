@@ -30,7 +30,7 @@ For Vercel deployments, enable **Web Analytics** in the project's Vercel dashboa
 - Fill ranges are limited to 250,000 cells per operation, with a recovery message for larger selections. Unchanged destinations do not allocate edits or add undo history.
 - **Undo / redo** for every action, including fills, pastes and sheet loads. Replacing the whole sheet (a demo, a CSV import or Clear) puts an **Undo** button next to its message in the status bar, so there is no confirmation dialog.
 - Copy, cut and paste. Pasting inside the sheet re-targets formula references, and tab-separated data pastes in from Excel or Google Sheets.
-- Resizable columns by dragging or entering a width in the **Sheet** menu, which also contains CSV import/export and Clear. Automatic saving to `localStorage` shows Saved in this browser, Saving, or a persistent Not saved state with a visible storage explanation and an **Export values as CSV** action. CSV export includes calculated values, not formulas; it is not a complete sheet backup. Loading a sheet sizes each whole column to its longest value, so nothing starts cut off.
+- Resizable columns by dragging or entering a width in the **Sheet** menu, which also contains backup/restore, CSV import/export and Clear. Automatic saving to `localStorage` shows Saved in this browser, Saving, or a persistent Not saved state with a visible storage explanation and a **Download backup** action that preserves formulas. CSV export includes calculated values, not formulas. Loading a sheet sizes each whole column to its longest value, so nothing starts cut off.
 - **Works by touch**: on a phone or tablet, a swipe scrolls the sheet, the round grip on the selection's top-left corner drags out a range, the fill handle and column edges drag with a finger, and every control has a tap area of at least 44 px. On phones narrower than 390 px the status bar shortens 10,000,000 to 10M so the engine metrics still fit. On a phone the CSV actions, Clear and the theme share one **Sheet** menu, so the toolbar fits on one row.
 - **Editing on a phone or tablet**: tap a cell to select, then edit its contents in the formula bar, or double-tap to start there. Visible **Apply** and **Cancel** controls finish the edit without keyboard shortcuts. The workspace responds to the software keyboard, menus and suggestions scroll within the available height, and controls stay clear of screen cutouts.
 - **Three themes**: Light, Dark, and **Semi**, a dark interface (column letters and row numbers included) around white cells, so the sheet looks the way it would print. The app follows the system's light or dark setting until you pick one in the **Theme** menu (in the **Sheet** menu on a phone); the choice is saved in the browser and applied before the first paint, so there is no flash.
@@ -107,6 +107,14 @@ npm run dev          # http://localhost:3000
 | `npm run check:h1` | Check that every built page has exactly one `<h1>` (run after `build`) |
 | `npm run docs:functions` | Regenerate `docs/FUNCTIONS.md` from the function registry |
 
+## Backups and CSV
+
+Use **Sheet → Download backup** to save cell contents and formulas as a `.gridcalc.json` file on your device, including any current edit. Use **Sheet → Restore backup** to replace the sheet with that file; Undo restores the previous cell contents. Restored columns are fitted to their contents. Backup files preserve raw cells rather than undo history, theme or column widths.
+
+Backups use a versioned format and a 20 MB limit. Restore validates the whole file before changing the sheet and rejects invalid addresses, non-text cell data or unsupported versions. If the sheet changes while the file is opening, restore stops so newer work is preserved. All processing stays on your device.
+
+**Export values as CSV** produces calculated values for other spreadsheet apps. It omits formulas; use a GridCalc backup to preserve formula work.
+
 ## Demos
 
 First-time visitors start with a **blank sheet**. Later visits restore the sheet saved in this browser. Open **Demos** in the toolbar to load an example:
@@ -151,7 +159,7 @@ src/
     references.ts      Reference extraction, formula shifting for fill/paste
     functions/         96 functions, grouped by category
   components/          React UI: Grid (virtualized), FormulaBar, DiagnosticsPanel, ...
-  state/               Undo/redo, drag-to-fill, selection, CSV, sample data
+  state/               Undo/redo, drag-to-fill, selection, CSV, backups, sample data
 tests/                 Vitest unit tests
 docs/                  FUNCTIONS.md (generated), ARCHITECTURE.md
 public/                llms.txt, theme.js (applies the saved theme before the first paint)
