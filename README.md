@@ -23,7 +23,7 @@ For Vercel deployments, enable **Web Analytics** in the project's Vercel dashboa
 - 10,000,000 addressable cells (100,000 rows × 100 columns) with custom virtualization. Only about 600 cells are mounted at any time, and scrolling runs at 60 fps.
 - Click, drag or Shift+Arrow selection, plus whole-row, whole-column and select-all from the headers.
 - Keyboard navigation: arrows, Tab, Enter, Home, Ctrl+Home/End, Page Up/Down, and Ctrl+Arrow to jump to the edge of the data.
-- In-cell editing and a **formula bar** with syntax highlighting. Each colour-coded reference matches the border drawn around its cells in the grid, with a separate set of reference colours for the light and dark themes so the text stays readable (at least 4.5:1) in both.
+- In-cell editing and a **formula bar**, both with syntax highlighting. Each colour-coded reference matches the border drawn around its cells in the grid, with a separate set of reference colours for the light and dark themes so the text stays readable (at least 4.5:1) in both.
 - **Click cells while typing a formula** to insert references. Drag to insert a range.
 - **Function autocomplete** and a signature hint that highlights the argument you are currently typing. Suggestions fit beside the name box on narrow screens; long signatures and examples wrap within the function reference panel. Choosing a function on a narrow screen closes the reference and focuses the formula bar so editing stays visible.
 - **Drag-to-fill**: formulas are copied with relative references shifted, numeric series are continued, and numbered text counts up. Ctrl+D / Ctrl+R fill down / right.
@@ -44,10 +44,11 @@ For Vercel deployments, enable **Web Analytics** in the project's Vercel dashboa
 - Toolbar popups dismiss when keyboard focus leaves them; function search keeps a visible focus ring, and editing and panel controls provide hover feedback.
 - Keyboard focus outlines the sheet viewport separately from the selected cell, so a selected cell does not imply that keyboard input is still directed to the grid.
 - **Help & shortcuts** explains touch editing, range selection and fill as well as keyboard commands, and links to the source on GitHub, the architecture notes and the function reference. On narrow or zoomed layouts it moves into the **⋯** menu instead of disappearing. The status bar's **?** explains each engine metric and links to how the engine works.
-- **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar and sheet, the active cell and its value are announced, status messages such as "Sheet cleared" are read out and stay up while you hover or focus them, an error cell is read with its one-line explanation, the toolbar, formula bar, sheet, diagnostics and status bar are each a landmark, autocomplete is a proper combobox, and every control shows a visible focus ring.
+- **Keyboard and screen-reader access**: Esc then Tab leaves the sheet, F6 moves between the toolbar, formula bar, demo guide and sheet, the active cell and its value are announced, status messages such as "Sheet cleared" are read out and stay up while you hover or focus them, an error cell is read with its one-line explanation, the toolbar, formula bar, sheet, diagnostics and status bar are each a landmark, autocomplete is a proper combobox, and every control shows a visible focus ring.
 
 **Formula engine**
-- Browse function signatures and descriptions without editing the sheet (**Shift+F3**, as in Excel, or the ƒx button). Each compact row inserts its function, the list is one Tab stop with arrow-key movement, category buttons jump to Math, Lookup, Text and the rest, the focused function's example shows at the bottom, and the panel names the destination cell.
+- Browse function signatures and descriptions without editing the sheet (**Shift+F3**, as in Excel, or the ƒx button). Each compact row inserts its function, the list is one Tab stop with arrow-key movement, **Recent** (the last five functions you inserted, kept in this browser) and **Common** (SUM, IF, VLOOKUP and the like) come before the alphabetical categories, category buttons jump to Math, Lookup, Text and the rest, the focused function's example shows at the bottom (SUM's until you pick another), and the panel names the destination cell.
+- A **command palette** (**Ctrl/⌘ + K**, the toolbar's **Commands** button, or **Search commands** in the **⋯** menu on phones) lists every action with its shortcut: errors and fixes, undo and fill, every Sheet and Demos action, themes and the docs. Type to filter, a cell or range such as `B12` to go there, or a function name to insert it.
 - **96 functions** including `SUM`, `IF`, `VLOOKUP`, `XLOOKUP`, `INDEX`/`MATCH`, `SUMIFS`, `COUNTIFS`, `TEXTJOIN` and `TEXT`. See [docs/FUNCTIONS.md](docs/FUNCTIONS.md) for the full list.
 - Arithmetic, comparison, concatenation (`&`), percent and unary operators with spreadsheet precedence. Supports cell references (`A1`, `$A$1`, `A$1`), ranges, and arbitrarily nested expressions and function calls.
 - Short-circuit evaluation for `IF`, `IFERROR`, `IFS`, `SWITCH` and `CHOOSE`.
@@ -160,7 +161,7 @@ src/
     references.ts      Reference extraction, formula shifting for fill/paste
     functions/         96 functions, grouped by category
   components/          React UI: Grid (virtualized), FormulaBar, DiagnosticsPanel, ...
-  state/               Undo/redo, drag-to-fill, selection, CSV, backups, sample data
+  state/               Undo/redo, drag-to-fill, selection, CSV, backups, sample data, recent functions
 tests/                 Vitest unit tests
 docs/                  FUNCTIONS.md (generated), ARCHITECTURE.md
 public/                llms.txt, theme.js (applies the saved theme before the first paint)
@@ -188,7 +189,8 @@ vercel.json            Deploys main only
 | F9 | Recalculate everything (re-rolls `RAND`) |
 | Shift + F3 | Open or close the function list |
 | Esc, then Tab | Leave the sheet |
-| F6 / Shift + F6 | Move between toolbar, formula bar and sheet |
+| Ctrl/⌘ + K | Command palette: search commands, functions and cells |
+| F6 / Shift + F6 | Move between toolbar, formula bar, demo guide and sheet |
 
 ## Roadmap
 

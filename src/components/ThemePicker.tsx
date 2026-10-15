@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from 'react';
 
 /** Read before the first paint by public/theme.js, which has its own copy of these ids and the key. */
-const THEMES = [
+export const THEMES = [
   { id: 'system', label: 'System', detail: 'Light or dark, as your device is set' },
   { id: 'light', label: 'Light', detail: 'Light everywhere' },
   { id: 'dark', label: 'Dark', detail: 'Dark everywhere' },
@@ -11,7 +11,7 @@ const THEMES = [
 ] as const;
 const THEME_KEY = 'gridcalc:theme';
 
-type Theme = (typeof THEMES)[number]['id'];
+export type Theme = (typeof THEMES)[number]['id'];
 
 /** The stored choice; with none, the page follows the system setting (public/theme.js applies it). */
 function currentTheme(): Theme {
@@ -29,20 +29,20 @@ function subscribeTheme(onChange: () => void) {
   return () => observer.disconnect();
 }
 
+export function pickTheme(id: Theme) {
+  try {
+    if (id === 'system') localStorage.removeItem(THEME_KEY);
+    else localStorage.setItem(THEME_KEY, id);
+  } catch {
+    // Private mode or blocked storage: the theme still applies until the page is reloaded.
+  }
+  // Setting the attribute last notifies subscribers once storage already holds the new choice.
+  document.documentElement.dataset.theme = id === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : id;
+}
+
 /** Four swatches, each a small picture of the theme: the frame is the toolbar and panels, the inner block the sheet. */
 export function ThemePicker() {
   const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => 'system');
-
-  const pick = (id: Theme) => {
-    try {
-      if (id === 'system') localStorage.removeItem(THEME_KEY);
-      else localStorage.setItem(THEME_KEY, id);
-    } catch {
-      // Private mode or blocked storage: the theme still applies until the page is reloaded.
-    }
-    // Setting the attribute last notifies subscribers once storage already holds the new choice.
-    document.documentElement.dataset.theme = id === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : id;
-  };
 
   return (
     <div className="theme-picker" role="radiogroup" aria-label="Theme">
@@ -53,7 +53,7 @@ export function ThemePicker() {
           role="radio"
           aria-checked={theme === t.id}
           tabIndex={theme === t.id ? 0 : -1}
-          onClick={() => pick(t.id)}
+          onClick={() => pickTheme(t.id)}
           onKeyDown={(e) => {
             const index = THEMES.findIndex((option) => option.id === t.id);
             let next: number;
@@ -63,7 +63,7 @@ export function ThemePicker() {
             else if (e.key === 'End') next = THEMES.length - 1;
             else return;
             e.preventDefault();
-            pick(THEMES[next].id);
+            pickTheme(THEMES[next].id);
             e.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]?.focus();
           }}
         >

@@ -111,6 +111,7 @@ The sheet is 100,000 rows × 100 columns (10 million cells). The grid is a custo
 | `fill.ts` | Drag-to-fill. Formulas are copied with relative references shifted (`$` anchors kept), numeric series are continued (1, 2 → 3, 4, 5), and numbered text counts up (`Item 9` → `Item 10`). |
 | `selection.ts` | Anchor/head selection model, plus Ctrl+Arrow jump-to-edge. |
 | `csv.ts` | RFC 4180 CSV import/export and TSV clipboard parsing. |
+| `recentFunctions.ts` | The last five inserted functions for the function list, kept in `localStorage` and validated against the function registry when read. |
 | `backup.ts` | Versioned raw-cell JSON backups with strict whole-file validation and a 20 MB limit. Restore uses the existing undoable replacement path and recalculates dependencies. |
 
 `engine/references.ts#shiftFormula` rewrites references token by token for fill and paste. References pushed off the sheet become `#REF!`.

@@ -9,6 +9,7 @@
 - Light, dark and semi themes, or follow the system setting; semi keeps the interface dark around a white sheet.
 - A first visit opens on a sample sheet with working formulas and intentional errors to fix.
 - The status bar counts error cells and jumps between them (F8 / Shift+F8); Ctrl/Cmd + . applies the suggested fix.
+- A command palette (Ctrl/Cmd + K) searches every action, function and cell address.
 - After an edit, the recalculated cells light up in dependency order (a recalculation wave).
 
 ## Docs

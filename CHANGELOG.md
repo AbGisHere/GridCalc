@@ -5,6 +5,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.13] - 2026-10-15
+
+### Added
+- A **command palette**: **Ctrl/⌘ + K**, the **Commands** button on wide screens, or **Search commands** in the **⋯** menu on phones. It lists every action with its shortcut (errors and the suggested fix, undo, fill, select all, recalculate, every Sheet and Demos action, the four themes and the docs). Typing filters it, a cell or range such as `B12` offers **Go to B12**, and a function name offers to insert it.
+- The function list starts with **Recent** (the last five functions inserted from the list, autocomplete or the palette, kept in this browser and validated when read) and **Common** (SUM, AVERAGE, COUNT, IF, IFERROR, ROUND, SUMIF, COUNTIF, VLOOKUP, XLOOKUP), so SUM no longer sits below ABS…PRODUCT.
+
+### Changed
+- The in-cell editor colours formulas the same way as the formula bar, with each reference in the colour of its border on the grid.
+- F6 also stops at the demo guide while it is open, so **Try a fix** can be reached from the keyboard without tabbing through the formula bar.
+- The status bar keeps the "cells" unit ("RECALC 20 cells", "DOM CELLS") down to 390 px wide; only smaller phones shorten it.
+
 ## [0.3.12] - 2026-10-15
 
 ### Added

@@ -21,6 +21,20 @@ interface FormulaBarProps {
   onToggleFunctions(): void;
 }
 
+/** A coloured copy of a formula, drawn over its input while the input's own text is transparent. */
+export function FormulaOverlay({ value, className, ref }: { value: string; className: string; ref?: Ref<HTMLDivElement> }) {
+  const segments = useMemo(() => highlightSegments(value), [value]);
+  return (
+    <div className={className} ref={ref} aria-hidden>
+      {segments.map((s, i) => (
+        <span key={i} className={`tok-${s.kind}`} style={s.color ? { color: s.color } : undefined}>
+          {s.text}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /** Name box + formula input with a syntax-highlighting overlay behind transparent text. */
 export function FormulaBar(props: FormulaBarProps) {
   const { value, address } = props;
@@ -28,7 +42,6 @@ export function FormulaBar(props: FormulaBarProps) {
   const innerRef = useRef<HTMLInputElement | null>(null);
   const [nameText, setNameText] = useState(address);
   const [nameFocused, setNameFocused] = useState(false);
-  const segments = useMemo(() => highlightSegments(value), [value]);
   const isFormula = value.startsWith('=');
 
   useEffect(() => {
@@ -81,15 +94,7 @@ export function FormulaBar(props: FormulaBarProps) {
         <i>ƒ</i>x
       </button>
       <div className={'fb-field' + (props.editing ? ' editing' : '')}>
-        {isFormula && (
-          <div className="fb-overlay" ref={overlayRef} aria-hidden>
-            {segments.map((s, i) => (
-              <span key={i} className={`tok-${s.kind}`} style={s.color ? { color: s.color } : undefined}>
-                {s.text}
-              </span>
-            ))}
-          </div>
-        )}
+        {isFormula && <FormulaOverlay value={value} className="fb-overlay" ref={overlayRef} />}
         <input
           ref={setRefs}
           className={'fb-input' + (isFormula ? ' highlighted' : '')}

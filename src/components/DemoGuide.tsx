@@ -1,5 +1,6 @@
 'use client';
 
+import type { Ref } from 'react';
 import { Icon } from './Icon';
 
 /** The sample's guide has two steps: fix an error, then change a value and watch the recalculation. */
@@ -12,11 +13,12 @@ interface DemoGuideProps {
   onStartBlank(): void;
   onGoTo(address: string): void;
   onDismiss(): void;
+  ref?: Ref<HTMLElement>;
 }
 
-export function DemoGuide({ kind, onTryFix, onLoadStress, onStartBlank, onGoTo, onDismiss }: DemoGuideProps) {
+export function DemoGuide({ kind, onTryFix, onLoadStress, onStartBlank, onGoTo, onDismiss, ref }: DemoGuideProps) {
   return (
-    <section className="demo-guide" aria-label="Demo guide">
+    <section className="demo-guide" aria-label="Demo guide" ref={ref}>
       <div className="guide-content">
         {kind === 'sample' ? (
           <p>

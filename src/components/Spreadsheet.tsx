@@ -18,7 +18,7 @@ import {
   type RangeBounds,
 } from '@/engine/address';
 import { SpreadsheetEngine, type CellEdit, type RecalcStats } from '@/engine/engine';
-import type { FnDef } from '@/engine/functions';
+import { FUNCTIONS, type FnDef } from '@/engine/functions';
 import { explainRuntimeError, parseFormula } from '@/engine/parser';
 import { normalizeFormula, shiftFormula } from '@/engine/references';
 import { CellError, displayValue } from '@/engine/values';
@@ -26,19 +26,21 @@ import { parseCSV, parseTSV, toCSV } from '@/state/csv';
 import { MAX_BACKUP_BYTES, parseBackup, readCells, toBackup } from '@/state/backup';
 import { buildFill, FillLimitError } from '@/state/fill';
 import { History } from '@/state/history';
+import { recordRecentFunction } from '@/state/recentFunctions';
 import { SAMPLE_SHEET, stressSheet } from '@/state/samples';
 import { clampPos, jump, selectionRange, single, type Selection } from '@/state/selection';
 import { DiagnosticsPanel, type DiagnosticView } from './DiagnosticsPanel';
 import { comboboxAttrs, FormulaAssist } from './FormulaAssist';
-import { FormulaBar } from './FormulaBar';
+import { FormulaBar, FormulaOverlay } from './FormulaBar';
 import { assistAt, canInsertRef, formulaRefs } from './formulaTokens';
 import { FunctionsPanel } from './FunctionsPanel';
 import { Icon } from './Icon';
-import { ThemePicker } from './ThemePicker';
+import { pickTheme, ThemePicker, THEMES } from './ThemePicker';
 import { ToolMenu } from './ToolMenu';
 import { ColumnWidthControl } from './ColumnWidthControl';
+import { CommandPalette, type Command } from './CommandPalette';
 import { DemoGuide, type GuideKind } from './DemoGuide';
-import { HelpContent } from './HelpContent';
+import { DOCS, HelpContent } from './HelpContent';
 import { clampColumnWidth, defaultColumnWidths, fittedColumnWidths, ROW_HEIGHT } from './geometry';
 import { Grid, type DragMode, type GridHandle } from './Grid';
 import { KEYS } from './keys';
@@ -134,6 +136,7 @@ export default function Spreadsheet() {
   const [assistOff, setAssistOff] = useState(false);
   const [colWidths, setColWidths] = useState(defaultColumnWidths);
   const [showFns, setShowFns] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   /** The demo on screen, whose guide can be reopened from the Demos menu after it is dismissed. */
   const [demoGuide, setDemoGuide] = useState<GuideKind | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -161,6 +164,8 @@ export default function Spreadsheet() {
   const toolbarRef = useRef<HTMLElement>(null);
   const barWrapRef = useRef<HTMLElement>(null);
   const workspaceRef = useRef<HTMLElement>(null);
+  const guideRef = useRef<HTMLElement>(null);
+  const cellOverlayRef = useRef<HTMLDivElement>(null);
   /** Set by Escape on the grid: the next Tab leaves the sheet instead of moving to the next cell. */
   const tabOut = useRef(false);
   const composing = useRef(false);
@@ -451,6 +456,7 @@ export default function Spreadsheet() {
     if (!edit || !assist?.prefix) return;
     const { start, text } = assist.prefix;
     const insert = `${def.name}(`;
+    recordRecentFunction(def.name);
     const value = edit.value.slice(0, start) + insert + edit.value.slice(start + text.length);
     const pos = start + insert.length;
     setEdit({ ...edit, value });
@@ -540,6 +546,9 @@ export default function Spreadsheet() {
     }
   };
 
+  const selectAll = () => setSel({ anchor: { row: 0, col: 0 }, head: { row: SHEET_ROWS - 1, col: SHEET_COLS - 1 } });
+  const recalculateAll = () => say(`Recalculate all (F9): ${recalcSummary(engine.recalculateAll())}`);
+
   const onGridKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget) return; // keystrokes inside the cell editor
     const mod = e.ctrlKey || e.metaKey;
@@ -559,7 +568,7 @@ export default function Spreadsheet() {
       redo();
     } else if (mod && lower === 'a') {
       e.preventDefault();
-      setSel({ anchor: { row: 0, col: 0 }, head: { row: SHEET_ROWS - 1, col: SHEET_COLS - 1 } });
+      selectAll();
     } else if (mod && lower === 'd') {
       e.preventDefault();
       fillFromEdge(true);
@@ -592,8 +601,7 @@ export default function Spreadsheet() {
       jumpToError(e.shiftKey);
     } else if (key === 'F9') {
       e.preventDefault();
-      const s = engine.recalculateAll();
-      say(`Recalculate all (F9): ${recalcSummary(s)}`);
+      recalculateAll();
     } else if (key === 'Home') {
       e.preventDefault();
       const next = mod ? { row: 0, col: 0 } : { row: active.row, col: 0 };
@@ -760,6 +768,7 @@ export default function Spreadsheet() {
   const insertFunction = (def: FnDef) => {
     const narrow = window.matchMedia('(max-width: 760px)').matches;
     const target = narrow ? 'bar' : edit?.target ?? 'cell';
+    recordRecentFunction(def.name);
     if (narrow) setShowFns(false);
     if (edit && edit.value.startsWith('=')) {
       const c = activeInput()?.selectionStart ?? edit.value.length;
@@ -844,9 +853,16 @@ export default function Spreadsheet() {
 
   /**
    * F6 / Shift+F6 cycle focus between the toolbar, the name box and the sheet, as in desktop spreadsheets;
-   * Shift+F3 opens or closes the function list, as in Excel; Ctrl/⌘+. applies the offered fix, as a code editor's quick fix.
+   * Shift+F3 opens or closes the function list, as in Excel; Ctrl/⌘+. applies the offered fix, as a code editor's quick fix;
+   * Ctrl/⌘+K opens the command palette.
    */
   const onAppKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey) && !e.altKey) {
+      e.preventDefault();
+      if (paletteOpen) closePalette();
+      else setPaletteOpen(true);
+      return;
+    }
     if (e.key === '.' && (e.ctrlKey || e.metaKey)) {
       if (!showDiag || !diagView?.fix) return;
       e.preventDefault();
@@ -861,11 +877,15 @@ export default function Spreadsheet() {
     }
     if (e.key !== 'F6') return;
     e.preventDefault();
-    const regions = [toolbarRef.current, barWrapRef.current, workspaceRef.current];
-    const current = regions.findIndex((r) => r?.contains(document.activeElement));
-    const next = current < 0 ? 2 : (current + (e.shiftKey ? 2 : 1)) % 3;
-    if (next === 2) gridRef.current?.focus();
-    else regions[next]?.querySelector<HTMLElement>('button:not(:disabled), input')?.focus();
+    // The guide sits inside the formula-bar section, so the formula bar's own row is a region of its own.
+    const regions = [toolbarRef.current, barWrapRef.current?.querySelector<HTMLElement>('.formula-bar'), guideRef.current, workspaceRef.current].filter(
+      (r): r is HTMLElement => !!r,
+    );
+    const n = regions.length;
+    const current = regions.findIndex((r) => r.contains(document.activeElement));
+    const next = current < 0 ? n - 1 : (current + (e.shiftKey ? n - 1 : 1)) % n;
+    if (next === n - 1) gridRef.current?.focus();
+    else regions[next].querySelector<HTMLElement>('button:not(:disabled), input')?.focus();
   };
 
   // ------------------------------------------------------------------ derived view state
@@ -968,11 +988,17 @@ export default function Spreadsheet() {
     return (activeRec.raw.startsWith('=') ? `${shown}, formula ${activeRec.raw}` : shown) + diagnosis;
   })();
 
+  const syncCellOverlay = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    if (cellOverlayRef.current) cellOverlayRef.current.scrollLeft = e.currentTarget.scrollLeft;
+  };
+  const cellIsFormula = !!edit?.value.startsWith('=');
   const cellEditor = edit && (
     <>
+      <span className="cell-field">
+      {cellIsFormula && <FormulaOverlay value={edit.value} className="cell-overlay" ref={cellOverlayRef} />}
       <input
         ref={cellInputRef}
-        className="cell-editor"
+        className={'cell-editor' + (cellIsFormula ? ' highlighted' : '')}
         aria-label={`Editing ${toA1(edit.row, edit.col)}`}
         value={edit.value}
         spellCheck={false}
@@ -980,12 +1006,17 @@ export default function Spreadsheet() {
         {...comboboxAttrs(assistId, assistOpen('cell'), assistSel)}
         style={{ width: Math.max(colWidths[edit.col] + 2, Math.min(560, edit.value.length * 8 + 24)) }}
         onChange={(e) => changeEdit(e.target.value, e.target.selectionStart ?? e.target.value.length)}
-        onSelect={(e) => setCaret((e.target as HTMLInputElement).selectionStart ?? 0)}
+        onSelect={(e) => {
+          setCaret(e.currentTarget.selectionStart ?? 0);
+          syncCellOverlay(e);
+        }}
+        onScroll={syncCellOverlay}
         onFocus={() => edit.target !== 'cell' && setEdit({ ...edit, target: 'cell' })}
         onKeyDown={onEditorKeyDown}
         onCompositionStart={() => { composing.current = true; }}
         onCompositionEnd={() => { composing.current = false; }}
       />
+      </span>
       {edit.target === 'cell' && assist && (
         <div className="assist-anchor">
           <FormulaAssist id={assistId} info={assist} selected={assistSel} onPick={acceptSuggestion} />
@@ -1002,6 +1033,46 @@ export default function Spreadsheet() {
     ...(previous ? [{ label: 'Previous sheet', detail: `Bring back the sheet that “${previous}” replaced`, run: bringBackPrevious }] : []),
   ];
   const clearSheet = () => replaceSheet({}, 'Clear sheet');
+  const loadDemo = (d: (typeof DEMOS)[number]) => replaceSheet(d.data(), d.label, d.guide);
+  const showGuide = () => setGuideOpen(true);
+  const guideDetail = `What to try on this ${demoGuide === 'stress' ? 'stress test' : 'sample sheet'}`;
+  const clearLabel = `Clear ${engine.cellCount.toLocaleString()} cell${engine.cellCount === 1 ? '' : 's'}`;
+  const openDoc = (url: string) => () => window.open(url, '_blank', 'noopener,noreferrer');
+
+  const closePalette = () => {
+    setPaletteOpen(false);
+    gridRef.current?.focus();
+  };
+  const commands: Command[] = [
+    ...(diagView?.fix && showDiag ? [{ group: 'Errors', label: 'Apply the suggested fix', detail: diagView.fix, keys: KEYS.fix.label, run: () => applyFix(diagView.fix!) }] : []),
+    ...(errorKeys.length
+      ? [
+          { group: 'Errors', label: 'Next error', detail: `${errorKeys.length.toLocaleString()} on the sheet`, keys: 'F8', run: () => jumpToError(false) },
+          { group: 'Errors', label: 'Previous error', keys: 'Shift+F8', run: () => jumpToError(true) },
+        ]
+      : []),
+    ...(history.canUndo ? [{ group: 'Edit', label: 'Undo', detail: history.peekUndoLabel(), keys: KEYS.undo.label, run: undo }] : []),
+    ...(history.canRedo ? [{ group: 'Edit', label: 'Redo', detail: history.peekRedoLabel(), keys: KEYS.redo.label, run: redo }] : []),
+    { group: 'Edit', label: 'Fill down', detail: 'Copy the top row of the selection down', keys: KEYS.fillDown.label, run: () => fillFromEdge(true) },
+    { group: 'Edit', label: 'Fill right', detail: 'Copy the left column of the selection right', keys: KEYS.fillRight.label, run: () => fillFromEdge(false) },
+    { group: 'Edit', label: 'Select the whole sheet', keys: KEYS.selectAll.label, run: selectAll },
+    { group: 'Sheet', label: 'Browse functions', detail: `All ${FUNCTIONS.length}, with examples`, keys: 'Shift+F3', run: () => setShowFns(true) },
+    { group: 'Sheet', label: 'Recalculate everything', keys: 'F9', run: recalculateAll },
+    ...sheetActions.map((a) => ({ group: 'Sheet', ...a })),
+    ...(engine.cellCount ? [{ group: 'Sheet', label: clearLabel, detail: 'Empty the sheet; Previous sheet brings it back', run: clearSheet }] : []),
+    ...(demoGuide && !guideOpen ? [{ group: 'Demos', label: 'Show the demo guide', detail: guideDetail, run: showGuide }] : []),
+    ...DEMOS.map((d) => ({ group: 'Demos', label: d.label, detail: d.detail, run: () => loadDemo(d) })),
+    ...THEMES.map((t) => ({ group: 'Theme', label: `${t.label} theme`, detail: t.detail, run: () => pickTheme(t.id) })),
+    { group: 'Help', label: 'How the engine works', detail: 'Architecture notes on GitHub', run: openDoc(DOCS.architecture) },
+    { group: 'Help', label: 'Function reference', detail: 'Every function with an example, on GitHub', run: openDoc(DOCS.functions) },
+    { group: 'Help', label: 'Source on GitHub', run: openDoc(DOCS.source) },
+  ];
+  const commandsFromQuery = (query: string): Command[] => {
+    const text = query.trim();
+    const cell = parseRangeA1(text) ? [{ group: 'Go to', label: `Go to ${text.toUpperCase()}`, run: () => goTo(text) }] : [];
+    const fns = text.length < 2 ? [] : FUNCTIONS.filter((f) => f.name.startsWith(text.toUpperCase())).slice(0, 5);
+    return [...cell, ...fns.map((f) => ({ group: 'Functions', label: `Insert ${f.name}`, detail: f.description, run: () => insertFunction(f) }))];
+  };
 
   // ------------------------------------------------------------------ render
   return (
@@ -1053,11 +1124,11 @@ export default function Spreadsheet() {
                     className="menu-item"
                     onClick={() => {
                       close();
-                      setGuideOpen(true);
+                      showGuide();
                     }}
                   >
                     <b>Show the demo guide</b>
-                    <span>What to try on this {demoGuide === 'stress' ? 'stress test' : 'sample sheet'}</span>
+                    <span>{guideDetail}</span>
                   </button>
                 )}
                 {DEMOS.map((d) => (
@@ -1066,7 +1137,7 @@ export default function Spreadsheet() {
                   className="menu-item"
                   onClick={() => {
                     close();
-                    replaceSheet(d.data(), d.label, d.guide);
+                    loadDemo(d);
                   }}
                 >
                   <b>{d.label}</b>
@@ -1119,7 +1190,7 @@ export default function Spreadsheet() {
                     clearSheet();
                   }}
                 >
-                  <b>{engine.cellCount ? `Clear ${engine.cellCount.toLocaleString()} cell${engine.cellCount === 1 ? '' : 's'}` : 'Clear sheet'}</b>
+                  <b>{engine.cellCount ? clearLabel : 'Clear sheet'}</b>
                   <span>Empty the sheet; Previous sheet brings it back</span>
                 </button>
               </>
@@ -1150,6 +1221,11 @@ export default function Spreadsheet() {
         </div>
 
         <div className="tool-group right wide-only">
+          <button className="tool" onClick={() => setPaletteOpen(true)} aria-haspopup="dialog" aria-keyshortcuts={KEYS.palette.aria}>
+            <Icon name="search" />
+            <span className="tool-label">Commands</span>
+            <kbd className="tool-kbd">{KEYS.palette.label}</kbd>
+          </button>
           <ToolMenu
             className="end"
             title="Theme"
@@ -1178,8 +1254,19 @@ export default function Spreadsheet() {
               </>
             }
           >
-            {() => (
+            {(close) => (
               <>
+                <button
+                  className="menu-item"
+                  aria-haspopup="dialog"
+                  onClick={() => {
+                    close();
+                    setPaletteOpen(true);
+                  }}
+                >
+                  <b>Search commands</b>
+                  <span>Every action, demo and theme in one list</span>
+                </button>
                 <ThemePicker />
                 <details className="help-details">
                   <summary>Help & shortcuts</summary>
@@ -1213,6 +1300,7 @@ export default function Spreadsheet() {
         />
         {demoGuide && guideOpen && !edit && (
           <DemoGuide
+            ref={guideRef}
             kind={demoGuide}
             // The guide stays open and moves on to its recalculation step.
             onTryFix={() => {
@@ -1310,6 +1398,7 @@ export default function Spreadsheet() {
         message={toast}
         onHold={(held) => setHeldToast(held ? toast : undefined)}
       />
+      {paletteOpen && <CommandPalette commands={commands} fromQuery={commandsFromQuery} onClose={closePalette} />}
     </div>
   );
 }

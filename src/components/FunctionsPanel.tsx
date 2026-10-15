@@ -1,10 +1,14 @@
 'use client';
 
 import { useId, useMemo, useRef, useState } from 'react';
-import { FUNCTIONS, type Category, type FnDef } from '@/engine/functions';
+import { FUNCTIONS, getFunction, type Category, type FnDef } from '@/engine/functions';
+import { readRecentFunctions } from '@/state/recentFunctions';
 import { Icon } from './Icon';
 
 const ORDER: Category[] = ['Math', 'Statistical', 'Logical', 'Lookup', 'Text', 'Information'];
+/** The functions most formulas use, listed before the alphabetical categories. */
+const COMMON = ['SUM', 'AVERAGE', 'COUNT', 'IF', 'IFERROR', 'ROUND', 'SUMIF', 'COUNTIF', 'VLOOKUP', 'XLOOKUP'];
+const defs = (names: string[]) => names.flatMap((n) => getFunction(n) ?? []);
 
 interface FunctionsPanelProps {
   address: string;
@@ -19,17 +23,19 @@ interface FunctionsPanelProps {
 export function FunctionsPanel({ address, onInsert, onClose }: FunctionsPanelProps) {
   const [q, setQ] = useState('');
   const [shown, setShown] = useState<FnDef>();
+  const [recent] = useState(readRecentFunctions);
   const listRef = useRef<HTMLDivElement>(null);
   const id = useId();
   const groups = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const match = (f: FnDef) => !needle || f.name.toLowerCase().includes(needle) || f.description.toLowerCase().includes(needle);
-    return ORDER.map((cat) => ({ cat, fns: FUNCTIONS.filter((f) => f.category === cat && match(f)) })).filter((g) => g.fns.length);
-  }, [q]);
-  const first = groups[0]?.fns[0];
+    // Without a search, recently inserted and common functions come first; they also stay in their categories.
+    const top = needle ? [] : [{ cat: 'Recent', fns: defs(recent) }, { cat: 'Common', fns: defs(COMMON) }];
+    return [...top, ...ORDER.map((cat) => ({ cat, fns: FUNCTIONS.filter((f) => f.category === cat && match(f)) }))].filter((g) => g.fns.length);
+  }, [q, recent]);
   const listed = groups.flatMap((g) => g.fns);
   // Until a row is focused or hovered, the example is the function most formulas start with.
-  const example = (shown && listed.includes(shown) ? shown : (listed.find((f) => f.name === 'SUM') ?? first)) ?? null;
+  const example = (shown && listed.includes(shown) ? shown : (listed.find((f) => f.name === 'SUM') ?? listed[0])) ?? null;
 
   const rows = () => [...(listRef.current?.querySelectorAll<HTMLButtonElement>('.fn-item') ?? [])];
   const onListKey = (e: React.KeyboardEvent) => {
@@ -71,22 +77,22 @@ export function FunctionsPanel({ address, onInsert, onClose }: FunctionsPanelPro
         </nav>
       )}
       <div className="fn-list" ref={listRef} onKeyDown={onListKey}>
-        {groups.map((g) => (
+        {groups.map((g, gi) => (
           <section key={g.cat} data-cat={g.cat} aria-labelledby={`${id}-${g.cat}`}>
             <h3 id={`${id}-${g.cat}`}>{g.cat}</h3>
-            {g.fns.map((f) => (
+            {g.fns.map((f, i) => (
               <button
                 key={f.name}
                 className="fn-item"
-                tabIndex={f === first ? 0 : -1}
+                tabIndex={gi === 0 && i === 0 ? 0 : -1}
                 aria-label={`Insert ${f.name}`}
-                aria-describedby={`${id}-${f.name}`}
+                aria-describedby={`${id}-${g.cat}-${f.name}`}
                 onFocus={() => setShown(f)}
                 onPointerEnter={() => setShown(f)}
                 onClick={() => onInsert(f)}
               >
                 <code className="fn-sig">{f.signature}</code>
-                <span className="fn-desc" id={`${id}-${f.name}`}>{f.description}</span>
+                <span className="fn-desc" id={`${id}-${g.cat}-${f.name}`}>{f.description}</span>
               </button>
             ))}
           </section>
