@@ -52,7 +52,9 @@ export function DiagnosticsPanel({ view, onApplyFix, onGoTo, onDismiss }: Diagno
       </div>
 
       <div className="diag-body">
-        <p className="diag-message">{view.message}</p>
+        <p className="diag-message">
+          {view.origin ? `${view.code} starts in ${view.origin} and reaches ${view.address} through a reference.` : view.message}
+        </p>
 
         {hasSpan && (
           <pre className="diag-code-block" aria-label="Formula with error position">
@@ -76,8 +78,10 @@ export function DiagnosticsPanel({ view, onApplyFix, onGoTo, onDismiss }: Diagno
 
         {view.origin && (
           <p className="diag-origin">
-            This error comes from <button onClick={() => onGoTo(view.origin!)}>{view.origin}</button> and flows into this
-            cell through a reference.
+            <span className="diag-label">In {view.origin}</span> {view.message}{' '}
+            <button className="diag-goto" onClick={() => onGoTo(view.origin!)}>
+              Go to {view.origin}
+            </button>
           </p>
         )}
 

@@ -5,6 +5,21 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.12] - 2026-10-15
+
+### Added
+- The sample's demo guide has a second step. After **Try a fix** it stays open and suggests changing C2 from 120 to 150 (**Go to C2**), so only the formulas that read C2 recalculate and the division by zero in H4 and H10 clears.
+- **Help & shortcuts** links to how the engine works, the full function reference and the source on GitHub, and the status bar's **?** links to how the engine works.
+
+### Changed
+- The guide's first step leads with what to try ("Nine cells in column H are deliberate errors") instead of how to get the sample back, and no longer says "tap one" on phones, where column H starts off-screen. The sample's column heading reads "Select a red cell".
+- An error passed on from another cell now leads with where it starts ("#DIV/0! starts in H4 and reaches H10 through a reference"), then gives H4's own explanation and a **Go to H4** button.
+- Status-bar messages stay on one line next to their button and end in an ellipsis when long; the full text stays in the tooltip and is read to screen readers.
+- Recalculations faster than 0.01 ms read "<0.01 ms" instead of "0.00 ms".
+- The idle status bar no longer shows "Ready".
+- The diagnostics panel's left column is no longer tinted; only the error code is.
+- The function list shows SUM's example until another function is focused or hovered.
+
 ## [0.3.11] - 2026-10-15
 
 ### Changed

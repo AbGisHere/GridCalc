@@ -37,7 +37,7 @@ import { Icon } from './Icon';
 import { ThemePicker } from './ThemePicker';
 import { ToolMenu } from './ToolMenu';
 import { ColumnWidthControl } from './ColumnWidthControl';
-import { DemoGuide } from './DemoGuide';
+import { DemoGuide, type GuideKind } from './DemoGuide';
 import { HelpContent } from './HelpContent';
 import { clampColumnWidth, defaultColumnWidths, fittedColumnWidths, ROW_HEIGHT } from './geometry';
 import { Grid, type DragMode, type GridHandle } from './Grid';
@@ -135,7 +135,7 @@ export default function Spreadsheet() {
   const [colWidths, setColWidths] = useState(defaultColumnWidths);
   const [showFns, setShowFns] = useState(false);
   /** The demo on screen, whose guide can be reopened from the Demos menu after it is dismissed. */
-  const [demoGuide, setDemoGuide] = useState<'sample' | 'stress' | null>(null);
+  const [demoGuide, setDemoGuide] = useState<GuideKind | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
   /** What replaced the sheet kept under PREVIOUS_KEY, for the Sheet menu's "Previous sheet". */
   const [previous, setPrevious] = useState<string | null>(null);
@@ -210,7 +210,7 @@ export default function Spreadsheet() {
       setDemoGuide('sample');
       setGuideOpen(true);
       // Focus starts on the sheet rather than the guide, so screen readers hear this once; the guide already shows it.
-      setToast({ text: 'Sample sheet: the red cells are intentional errors. Press F8, or choose Try a fix, to see one explained.', quiet: true });
+      setToast({ text: 'Sample sheet: the cells in column H are deliberate errors. Press F8, or choose Try a fix, to see one explained.', quiet: true });
     }
     if (!widths) setColWidths(contentWidths(engine));
     setLoaded(true);
@@ -1057,7 +1057,7 @@ export default function Spreadsheet() {
                     }}
                   >
                     <b>Show the demo guide</b>
-                    <span>What to try on this {demoGuide === 'sample' ? 'sample sheet' : 'stress test'}</span>
+                    <span>What to try on this {demoGuide === 'stress' ? 'stress test' : 'sample sheet'}</span>
                   </button>
                 )}
                 {DEMOS.map((d) => (
@@ -1214,8 +1214,9 @@ export default function Spreadsheet() {
         {demoGuide && guideOpen && !edit && (
           <DemoGuide
             kind={demoGuide}
+            // The guide stays open and moves on to its recalculation step.
             onTryFix={() => {
-              setGuideOpen(false);
+              setDemoGuide('recalc');
               goTo('H2');
             }}
             onLoadStress={() => replaceSheet(stressSheet(), '10k-row stress test', 'stress')}

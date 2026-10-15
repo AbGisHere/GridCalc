@@ -55,7 +55,7 @@ export const SAMPLE_SHEET: Record<string, string> = {
 
   // Errors with a one-click fix come first, so the first red cell a visitor clicks shows the whole diagnosis.
   G1: 'Error examples',
-  H1: 'Click a red cell ↓',
+  H1: 'Select a red cell ↓',
   G2: 'Typo in function',
   H2: '=SUMM(C2:C7)',
   G3: 'Missing paren',

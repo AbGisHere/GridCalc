@@ -560,6 +560,34 @@ button {
   white-space: normal;
 }
 
+.doc-links {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doc-links li {
+  padding: 3px 0;
+}
+
+/* Links out to the source and docs: the only underlined text in the app, so they read as links, not menu items. */
+.doc-link {
+  color: var(--accent-strong);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.doc-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.metrics-help .doc-link {
+  display: block;
+  padding: 2px 8px 8px;
+}
+
 .help-details {
   padding: 4px 10px 8px;
   border-top: 1px solid var(--border);
@@ -1282,12 +1310,7 @@ button {
   align-items: flex-start;
   gap: 6px;
   padding: 12px 10px;
-  background: var(--error-soft);
   border-right: 1px solid var(--border);
-}
-
-.diag-live .diag-gutter {
-  background: var(--warn-soft);
 }
 
 .diag-body {
@@ -1393,6 +1416,17 @@ button {
   padding: 1px 6px;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.diag-origin .diag-goto {
+  margin-left: 2px;
+  padding: 2px 8px;
+  font-family: var(--sans);
+  white-space: nowrap;
+}
+
+.diag-origin button:hover {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .diag-label {
@@ -1722,6 +1756,15 @@ kbd {
   align-items: center;
 }
 
+/* A message stays on one line beside its action button: the message shrinks and ends in an ellipsis. */
+.status-left:has(.status-message) {
+  flex-wrap: nowrap;
+}
+
+.status-left > * {
+  flex: none;
+}
+
 .status-right {
   margin-left: auto;
   gap: 4px 20px;
@@ -1825,9 +1868,13 @@ kbd {
 }
 
 .status-message {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--accent-strong);
   font-weight: 550;
-  white-space: normal;
 }
 
 .status-message.error,

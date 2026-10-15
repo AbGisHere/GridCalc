@@ -2,6 +2,7 @@
 
 import type { RecalcStats } from '@/engine/engine';
 import { formatNumber } from '@/engine/values';
+import { DOCS } from './HelpContent';
 import { ToolMenu } from './ToolMenu';
 
 export interface SelectionStats {
@@ -45,7 +46,7 @@ const fmt = (n: number) => n.toLocaleString('en-US');
 const compact = new Intl.NumberFormat('en-US', { notation: 'compact' });
 
 /** One format for every recalculation time, so the status message and the Recalc metric always agree. */
-export const formatMs = (ms: number) => `${ms.toFixed(ms < 10 ? 2 : 0)} ms`;
+export const formatMs = (ms: number) => (ms < 0.005 ? '<0.01 ms' : `${ms.toFixed(ms < 10 ? 2 : 0)} ms`);
 
 const METRICS: [string, string][] = [
   ['Recalc', 'How many formulas the last change re-evaluated, and how long that took. Only cells downstream of an edit are recalculated.'],
@@ -134,9 +135,7 @@ export function StatusBar({ saveState, onExport, onBackup, stats, recalc, render
           <span>
             Count <b>{fmt(stats.count)}</b>
           </span>
-        ) : (
-          !shown && <span>Ready</span>
-        )}
+        ) : null}
       </div>
       <div className="status-right" role="group" aria-label="Engine">
         {/* Keyed by the recalculation, so each new one replays the pulse alongside the wave on the grid. */}
@@ -176,14 +175,19 @@ export function StatusBar({ saveState, onExport, onBackup, stats, recalc, render
           }
         >
           {() => (
-            <dl className="metrics-list">
-              {METRICS.map(([term, meaning]) => (
-                <div key={term}>
-                  <dt>{term}</dt>
-                  <dd>{meaning}</dd>
-                </div>
-              ))}
-            </dl>
+            <>
+              <dl className="metrics-list">
+                {METRICS.map(([term, meaning]) => (
+                  <div key={term}>
+                    <dt>{term}</dt>
+                    <dd>{meaning}</dd>
+                  </div>
+                ))}
+              </dl>
+              <a className="doc-link" href={DOCS.architecture} target="_blank" rel="noopener noreferrer">
+                How the engine works
+              </a>
+            </>
           )}
         </ToolMenu>
       </div>

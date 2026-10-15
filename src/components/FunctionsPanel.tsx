@@ -27,7 +27,9 @@ export function FunctionsPanel({ address, onInsert, onClose }: FunctionsPanelPro
     return ORDER.map((cat) => ({ cat, fns: FUNCTIONS.filter((f) => f.category === cat && match(f)) })).filter((g) => g.fns.length);
   }, [q]);
   const first = groups[0]?.fns[0];
-  const example = (shown && groups.some((g) => g.fns.includes(shown)) ? shown : first) ?? null;
+  const listed = groups.flatMap((g) => g.fns);
+  // Until a row is focused or hovered, the example is the function most formulas start with.
+  const example = (shown && listed.includes(shown) ? shown : (listed.find((f) => f.name === 'SUM') ?? first)) ?? null;
 
   const rows = () => [...(listRef.current?.querySelectorAll<HTMLButtonElement>('.fn-item') ?? [])];
   const onListKey = (e: React.KeyboardEvent) => {

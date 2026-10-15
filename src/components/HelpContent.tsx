@@ -1,3 +1,13 @@
+import { FUNCTIONS } from '@/engine/functions';
+
+const REPO = 'https://github.com/AbGisHere/GridCalc';
+
+export const DOCS = {
+  source: REPO,
+  architecture: `${REPO}/blob/main/docs/ARCHITECTURE.md`,
+  functions: `${REPO}/blob/main/docs/FUNCTIONS.md`,
+};
+
 const SHORTCUTS: [string, string][] = [
   ['Arrows / Tab / Enter', 'Move, or start editing (Enter / F2)'],
   ['Shift + Arrows', 'Extend selection'],
@@ -36,6 +46,18 @@ export function HelpContent() {
           ))}
         </tbody>
       </table>
+      <h2>Under the hood</h2>
+      <ul className="doc-links">
+        <li>
+          <a className="doc-link" href={DOCS.architecture} target="_blank" rel="noopener noreferrer">How the engine works</a>
+        </li>
+        <li>
+          <a className="doc-link" href={DOCS.functions} target="_blank" rel="noopener noreferrer">All {FUNCTIONS.length} functions</a>
+        </li>
+        <li>
+          <a className="doc-link" href={DOCS.source} target="_blank" rel="noopener noreferrer">Source on GitHub</a>
+        </li>
+      </ul>
     </div>
   );
 }
