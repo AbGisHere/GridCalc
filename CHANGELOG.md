@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.11] - 2026-10-15
+
+### Changed
+- Updated Vitest from 4.1 to 5.0 (Dependabot PR #4). Vitest 5 needs Node.js 22.12 or later, so the development requirement moves from Node.js 20 to 22.12; the site itself is unaffected.
+
 ## [0.3.10] - 2026-10-15
 
 ### Added

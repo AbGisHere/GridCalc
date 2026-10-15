@@ -90,7 +90,7 @@ Suggestion: Add ')' at the end of the formula.
 
 ## Getting started
 
-Requirements: **Node.js 20+**.
+Requirements: **Node.js 22.12+** (the test runner, Vitest 5, needs it).
 
 ```bash
 npm install
