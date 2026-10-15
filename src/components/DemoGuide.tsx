@@ -15,11 +15,15 @@ export function DemoGuide({ kind, onTryFix, onLoadStress, onStartBlank, onGoTo, 
   return (
     <section className="demo-guide" aria-label="Demo guide">
       <div className="guide-content">
-        <p>
-          {kind === 'sample'
-            ? 'The red cells are intentional errors: press F8 or Try a fix to see one explained. Loading 10k rows or starting blank replaces the sample; Undo restores it while this page is open.'
-            : 'Compare recalculation: edit B2 to update the long dependency chain, then B10001 to update only its end. Watch Recalc below.'}
-        </p>
+        {kind === 'sample' ? (
+          <p>
+            The red cells are intentional errors: <span className="keys-only">press F8</span>
+            <span className="touch-only">tap one</span> or Try a fix to see one explained. The other two replace the sample;
+            Sheet › Previous sheet brings it back.
+          </p>
+        ) : (
+          <p>Compare recalculation: edit B2 to update the long dependency chain, then B10001 to update only its end. Watch Recalc below.</p>
+        )}
         <div className="guide-actions">
           {kind === 'sample' ? (
             <>

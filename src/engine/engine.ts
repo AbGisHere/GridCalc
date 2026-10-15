@@ -30,8 +30,6 @@ export interface RecalcStats {
   edited: number;
   /** Formula cells re-evaluated (only the changed cells' transitive dependents). */
   evaluated: number;
-  /** Strongly connected components found to be circular. */
-  cycles: number;
   ms: number;
 }
 
@@ -147,8 +145,8 @@ export class SpreadsheetEngine {
       this.write(key, e.raw);
       changed.push(key);
     }
-    const { evaluated, cycles, wave } = this.recalculate(changed);
-    const stats: RecalcStats = { edited: changed.length, evaluated, cycles, ms: now() - t0 };
+    const { evaluated, wave } = this.recalculate(changed);
+    const stats: RecalcStats = { edited: changed.length, evaluated, ms: now() - t0 };
     this.lastWave = wave;
     this.lastStats = stats;
     this.version++;
@@ -159,8 +157,8 @@ export class SpreadsheetEngine {
   /** Re-evaluates every formula (F9). Used for volatile functions and as a safety net. */
   recalculateAll(): RecalcStats {
     const t0 = now();
-    const { evaluated, cycles } = this.recalculate([...this.cells.keys()]);
-    const stats: RecalcStats = { edited: 0, evaluated, cycles, ms: now() - t0 };
+    const { evaluated } = this.recalculate([...this.cells.keys()]);
+    const stats: RecalcStats = { edited: 0, evaluated, ms: now() - t0 };
     this.lastWave = new Map();
     this.lastStats = stats;
     this.version++;
@@ -254,7 +252,7 @@ export class SpreadsheetEngine {
     this.rangeIndex.forEachOwnerContaining(keyRow(key), keyCol(key), fn);
   }
 
-  private recalculate(changed: readonly number[]): { evaluated: number; cycles: number; wave: Map<number, number> } {
+  private recalculate(changed: readonly number[]): { evaluated: number; wave: Map<number, number> } {
     // 1. Collect the affected subgraph: changed cells, volatile cells, and everything downstream.
     const affected = new Set<number>(changed);
     for (const v of this.volatileCells) affected.add(v);
@@ -281,12 +279,10 @@ export class SpreadsheetEngine {
     const depth = new Map<number, number>();
     const wave = new Map<number, number>();
     let evaluated = 0;
-    let cycles = 0;
     for (let i = components.length - 1; i >= 0; i--) {
       const comp = components[i];
       if (comp.length > 1 || succ(comp[0]).includes(comp[0])) {
         this.markCircular(comp, succ);
-        cycles++;
         evaluated += comp.length;
       } else if (this.evaluate(comp[0])) {
         evaluated++;
@@ -300,7 +296,7 @@ export class SpreadsheetEngine {
         }
       }
     }
-    return { evaluated, cycles, wave };
+    return { evaluated, wave };
   }
 
   private evaluate(key: number): boolean {
@@ -337,7 +333,7 @@ export class SpreadsheetEngine {
         const next = parseA1(path[1]);
         if (next) span = findReferenceSpan(rec.ast, next.row, next.col);
       }
-      rec.value = new CellError('#CIRC!', message, span);
+      rec.value = new CellError('#CIRC!', message, span, undefined, path);
     }
   }
 }

@@ -75,6 +75,7 @@ describe('circular references', () => {
     const e = s.error('A1')!;
     expect(e.code).toBe('#CIRC!');
     expect(e.message).toContain('A1 → B1 → C1 → A1');
+    expect(e.loop).toEqual(['A1', 'B1', 'C1', 'A1']);
     expect(s.error('B1')!.code).toBe('#CIRC!');
     expect(s.error('C1')!.code).toBe('#CIRC!');
   });
@@ -87,6 +88,8 @@ describe('circular references', () => {
   it('marks downstream cells and recovers when the cycle is broken', () => {
     const s = sheet({ A1: '=B1', B1: '=A1', C1: '=A1*2' });
     expect(s.error('C1')!.code).toBe('#CIRC!');
+    // Only the cells in the loop carry it; C1 reads the loop and links to its source instead.
+    expect(s.error('C1')!.loop).toBeUndefined();
     s.set('B1', 21);
     expect(s.get('A1')).toBe(21);
     expect(s.get('C1')).toBe(42);

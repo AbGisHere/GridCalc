@@ -4,6 +4,7 @@ import { useSyncExternalStore } from 'react';
 
 /** Read before the first paint by public/theme.js, which has its own copy of these ids and the key. */
 const THEMES = [
+  { id: 'system', label: 'System', detail: 'Light or dark, as your device is set' },
   { id: 'light', label: 'Light', detail: 'Light everywhere' },
   { id: 'dark', label: 'Dark', detail: 'Dark everywhere' },
   { id: 'semi', label: 'Semi', detail: 'Dark around a white sheet' },
@@ -12,9 +13,14 @@ const THEME_KEY = 'gridcalc:theme';
 
 type Theme = (typeof THEMES)[number]['id'];
 
+/** The stored choice; with none, the page follows the system setting (public/theme.js applies it). */
 function currentTheme(): Theme {
-  const theme = document.documentElement.dataset.theme;
-  return theme === 'dark' || theme === 'semi' ? theme : 'light';
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    return THEMES.some((t) => t.id === saved) ? (saved as Theme) : 'system';
+  } catch {
+    return 'system';
+  }
 }
 
 function subscribeTheme(onChange: () => void) {
@@ -23,17 +29,19 @@ function subscribeTheme(onChange: () => void) {
   return () => observer.disconnect();
 }
 
-/** Three swatches, each a small picture of the theme: the frame is the toolbar and panels, the inner block the sheet. */
+/** Four swatches, each a small picture of the theme: the frame is the toolbar and panels, the inner block the sheet. */
 export function ThemePicker() {
-  const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => 'light');
+  const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => 'system');
 
   const pick = (id: Theme) => {
-    document.documentElement.dataset.theme = id;
     try {
-      localStorage.setItem(THEME_KEY, id);
+      if (id === 'system') localStorage.removeItem(THEME_KEY);
+      else localStorage.setItem(THEME_KEY, id);
     } catch {
       // Private mode or blocked storage: the theme still applies until the page is reloaded.
     }
+    // Setting the attribute last notifies subscribers once storage already holds the new choice.
+    document.documentElement.dataset.theme = id === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : id;
   };
 
   return (

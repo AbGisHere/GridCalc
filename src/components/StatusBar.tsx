@@ -13,6 +13,15 @@ export interface SelectionStats {
   max: number;
 }
 
+/** Status-bar message, with an optional follow-up such as undoing a sheet replacement or showing a new error. */
+export interface StatusMessage {
+  text: string;
+  action?: { label: string; run(): void };
+  tone?: 'error';
+  /** Read by screen readers only, when the same words are already on screen elsewhere. */
+  quiet?: boolean;
+}
+
 interface StatusBarProps {
   saveState: 'saving' | 'saved' | 'failed';
   onExport(): void;
@@ -24,10 +33,10 @@ interface StatusBarProps {
   usedCells: number;
   /** How many cells hold an error; the button walks through them. */
   errors: number;
+  /** Cells in a reference loop anywhere on the sheet. */
+  circular: number;
   onNextError(): void;
-  message?: string;
-  /** A follow-up shown with the message, such as Undo after a sheet replacement or Show for a new error. */
-  action?: { label: string; run(): void };
+  message?: StatusMessage;
   /** True while the pointer or keyboard focus is on the message, so it doesn't vanish mid-read or under the Undo button. */
   onHold(held: boolean): void;
 }
@@ -40,26 +49,37 @@ export const formatMs = (ms: number) => `${ms.toFixed(ms < 10 ? 2 : 0)} ms`;
 
 const METRICS: [string, string][] = [
   ['Recalc', 'How many formulas the last change re-evaluated, and how long that took. Only cells downstream of an edit are recalculated.'],
-  ['Circular', 'Formulas in a reference loop. They show #CIRC! and name the cells in the loop.'],
+  ['Circular', 'Cells in a reference loop anywhere on the sheet. They show #CIRC!, and their explanation links each cell in the loop.'],
   ['DOM cells', 'Cells that exist in the page right now, out of 10,000,000 addressable ones. The grid only renders what is on screen.'],
   ['Used', 'Cells with contents.'],
 ];
 
-export function StatusBar({ saveState, onExport, onBackup, stats, recalc, rendered, totalCells, usedCells, errors, onNextError, message, action, onHold }: StatusBarProps) {
+export function StatusBar({ saveState, onExport, onBackup, stats, recalc, rendered, totalCells, usedCells, errors, circular, onNextError, message, onHold }: StatusBarProps) {
+  const shown = message?.quiet ? undefined : message;
   return (
     <footer className="status-bar">
       <p className="sr-only" role="status">
-        {message}
+        {message?.text}
       </p>
       {/* Only a failed save is announced; saving after every edit would be noise. */}
       <p className="sr-only" role="alert">
         {saveState === 'failed' && 'Not saved. Browser storage is unavailable or full.'}
       </p>
       <div className={`save-state ${saveState}`}>
-        <span>
-          {saveState === 'failed' ? 'Not saved' : saveState === 'saving' ? 'Saving…' : <>Saved<span className="save-where"> in this browser</span></>}
-          {saveState === 'failed' && <span className="save-detail"> — Browser storage is unavailable or full. Download a backup to keep cell contents and formulas.</span>}
-        </span>
+        {saveState === 'failed' ? (
+          <span>
+            Not saved
+            <span className="save-detail"> — Browser storage is unavailable or full. Download a backup to keep cell contents and formulas.</span>
+          </span>
+        ) : (
+          // Both labels share one grid cell, so swapping them after every edit never shifts the footer.
+          <span className="save-swap" data-state={saveState}>
+            <span>Saving…</span>
+            <span>
+              Saved<span className="save-where"> in this browser</span>
+            </span>
+          </span>
+        )}
         {saveState === 'failed' && (
           <>
             <button className="status-undo" onClick={onBackup}>Download backup</button>
@@ -68,9 +88,10 @@ export function StatusBar({ saveState, onExport, onBackup, stats, recalc, render
         )}
       </div>
       {errors > 0 && (
-        <button className="err-nav" onClick={onNextError} title="Select the next error cell (F8, or Shift+F8 for the previous one)">
+        <button className="err-nav" onClick={onNextError} title="Select the next error cell (Shift+F8 for the previous one)" aria-keyshortcuts="F8">
           <b>{fmt(errors)}</b> error{errors === 1 ? '' : 's'}
           <span aria-hidden> · </span>Next<span aria-hidden> ›</span>
+          <kbd>F8</kbd>
         </button>
       )}
       <div
@@ -81,14 +102,14 @@ export function StatusBar({ saveState, onExport, onBackup, stats, recalc, render
         onBlur={(e) => onHold(e.currentTarget.matches(':hover'))}
       >
         {/* A message sits beside the selection stats rather than replacing them. */}
-        {message && (
+        {shown && (
           <>
-            <span className="status-message" title={message}>
-              {message}
+            <span className={'status-message' + (shown.tone ? ` ${shown.tone}` : '')} title={shown.text}>
+              {shown.text}
             </span>
-            {action && (
-              <button className="status-undo" onClick={action.run}>
-                {action.label}
+            {shown.action && (
+              <button className="status-undo" onClick={shown.action.run}>
+                {shown.action.label}
               </button>
             )}
           </>
@@ -114,7 +135,7 @@ export function StatusBar({ saveState, onExport, onBackup, stats, recalc, render
             Count <b>{fmt(stats.count)}</b>
           </span>
         ) : (
-          !message && <span>Ready</span>
+          !shown && <span>Ready</span>
         )}
       </div>
       <div className="status-right" role="group" aria-label="Engine">
@@ -125,12 +146,17 @@ export function StatusBar({ saveState, onExport, onBackup, stats, recalc, render
             <>
               <b>{fmt(recalc.evaluated)}</b>
               <span className="metric-unit"> cell{recalc.evaluated === 1 ? '' : 's'}</span> in <b>{formatMs(recalc.ms)}</b>
-              {recalc.cycles > 0 && <span className="warn"> · {recalc.cycles} circular</span>}
             </>
           ) : (
             <span>none yet</span>
           )}
         </span>
+        {circular > 0 && (
+          <span className="metric metric-circ">
+            <span className="metric-label">Circular</span>
+            <b>{fmt(circular)}</b>
+          </span>
+        )}
         <span className="metric">
           <span className="metric-label">DOM<span className="metric-unit"> cells</span></span>
           <b>{fmt(rendered)}</b> of <span className="total-full">{fmt(totalCells)}</span>

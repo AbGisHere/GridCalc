@@ -13,6 +13,7 @@ const SHORTCUTS: [string, string][] = [
   ['Drag the fill handle', 'Copy formulas or continue a series'],
   ['Click cells while typing a formula', 'Insert references'],
   ['F8 / Shift + F8', 'Next / previous error'],
+  ['Ctrl/⌘ + .', 'Apply the suggested fix'],
   ['F9', 'Recalculate everything'],
   ['Shift + F3', 'Open or close the function list'],
 ];

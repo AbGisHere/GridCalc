@@ -377,7 +377,7 @@ button {
 
 .theme-picker {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 4px;
 }
 
@@ -442,6 +442,15 @@ button {
 .theme-swatch.dark,
 .theme-swatch.semi {
   background: var(--ink);
+}
+
+/* System: light and dark halves, as the device decides. */
+.theme-swatch.system {
+  background: linear-gradient(135deg, var(--paper) 50%, var(--ink) 50%);
+}
+
+.theme-swatch.system::after {
+  background: linear-gradient(135deg, var(--paper) 50%, color-mix(in srgb, var(--paper) 6%, var(--ink)) 50%);
 }
 
 .theme-swatch.dark::after {
@@ -589,7 +598,7 @@ button {
 .guide-content p {
   flex: 1 1 30ch;
   margin: 0;
-  max-width: 70ch;
+  max-width: 60ch;
   color: var(--muted);
   font-size: var(--text-sm);
   line-height: 1.5;
@@ -1443,6 +1452,42 @@ button {
   background: var(--accent-strong);
 }
 
+/* Shortcut hints, set in the formula font like the diagnostics they speed up. */
+kbd {
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 4px;
+  font: 500 var(--text-xs) / 1.5 var(--mono);
+}
+
+.tool-kbd {
+  display: none;
+  margin-left: 0;
+  color: var(--chrome-muted);
+}
+
+@media (min-width: 1100px) {
+  .tool-kbd {
+    display: inline;
+  }
+}
+
+/* Touch screens have no keys to press, so the hints and keyboard wording give way to touch wording. */
+.touch-only {
+  display: none;
+}
+
+@media (pointer: coarse) and (hover: none) {
+  kbd,
+  .keys-only {
+    display: none;
+  }
+  .touch-only {
+    display: inline;
+  }
+}
+
 /* ------------------------------------------------------------------ functions panel */
 .fn-panel {
   width: min(340px, 100%);
@@ -1651,12 +1696,23 @@ button {
   padding-bottom: 4px;
 }
 
-.save-state.saved {
+.save-state.saved,
+.save-state.saving {
   color: var(--accent-strong);
 }
 
-.save-state.saving {
-  color: var(--warn);
+/* Saving is routine after every edit: same colour, same width, only the word changes. */
+.save-swap {
+  display: inline-grid;
+}
+
+.save-swap > span {
+  grid-area: 1 / 1;
+}
+
+.save-swap[data-state='saving'] > span:last-child,
+.save-swap[data-state='saved'] > span:first-child {
+  visibility: hidden;
 }
 
 .status-left {
@@ -1774,7 +1830,8 @@ button {
   white-space: normal;
 }
 
-.status-bar .warn {
+.status-message.error,
+.status-bar .metric-circ b {
   color: var(--error);
 }
 
@@ -1820,7 +1877,7 @@ button {
   }
   /* The error count already shows circular references; hiding the repeat keeps both metrics on one line. */
   .metric-used,
-  .metric .warn {
+  .metric-circ {
     display: none;
   }
   .fn-panel {

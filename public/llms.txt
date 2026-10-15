@@ -5,10 +5,10 @@
 - Sheet contents stay in the browser (localStorage). Vercel Web Analytics measures page visits; cell contents and formulas are not sent to analytics.
 - 96 built-in functions, including SUM, IF, VLOOKUP, XLOOKUP, INDEX/MATCH, SUMIFS and TEXTJOIN.
 - Local .gridcalc.json backups preserve cell contents and formulas; restore validates the file before replacing the sheet. Values-only CSV export is available separately.
-- Circular references are detected and reported as #CIRC! with the cycle path.
-- Light, dark and semi themes; semi keeps the interface dark around a white sheet.
+- Circular references are detected and reported as #CIRC! with the cycle path; each cell in the loop is a link and the loop is outlined on the grid.
+- Light, dark and semi themes, or follow the system setting; semi keeps the interface dark around a white sheet.
 - A first visit opens on a sample sheet with working formulas and intentional errors to fix.
-- The status bar counts error cells and jumps between them (F8 / Shift+F8).
+- The status bar counts error cells and jumps between them (F8 / Shift+F8); Ctrl/Cmd + . applies the suggested fix.
 - After an edit, the recalculated cells light up in dependency order (a recalculation wave).
 
 ## Docs

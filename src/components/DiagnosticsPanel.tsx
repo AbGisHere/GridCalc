@@ -1,8 +1,10 @@
 'use client';
 
+import { Fragment } from 'react';
 import { caretLine } from '@/engine/diagnostics';
 import type { ErrorCode } from '@/engine/values';
 import { Icon } from './Icon';
+import { KEYS } from './keys';
 
 export interface DiagnosticView {
   /** 'syntax' = formula can't be parsed; 'runtime' = it evaluated to an error; 'live' = while typing. */
@@ -16,6 +18,7 @@ export interface DiagnosticView {
   suggestion?: string;
   fix?: string;
   origin?: string;
+  loop?: readonly string[];
   related?: { start: number; end: number; label: string };
 }
 
@@ -78,6 +81,18 @@ export function DiagnosticsPanel({ view, onApplyFix, onGoTo, onDismiss }: Diagno
           </p>
         )}
 
+        {view.loop && (
+          <p className="diag-origin diag-loop">
+            <span className="diag-label">Loop</span>{' '}
+            {view.loop.map((a1, i) => (
+              <Fragment key={i}>
+                {i > 0 && <span aria-hidden> → </span>}
+                <button onClick={() => onGoTo(a1)}>{a1}</button>
+              </Fragment>
+            ))}
+          </p>
+        )}
+
         {view.suggestion && (
           <p className="diag-suggestion">
             <span className="diag-label">Suggestion</span> {view.suggestion}
@@ -88,7 +103,9 @@ export function DiagnosticsPanel({ view, onApplyFix, onGoTo, onDismiss }: Diagno
           <div className="diag-fix">
             <span className="diag-label">Fixed formula</span>
             <code>{view.fix}</code>
-            <button onClick={() => onApplyFix(view.fix!)}>Apply fix</button>
+            <button onClick={() => onApplyFix(view.fix!)} aria-keyshortcuts={KEYS.fix.aria}>
+              Apply fix <kbd>{KEYS.fix.label}</kbd>
+            </button>
           </div>
         )}
       </div>

@@ -31,7 +31,7 @@ Core requirements it must visibly satisfy:
 ## Operating Context
 
 - Live at https://gridcalc.abgupta.me (Vercel); source at https://github.com/AbGisHere/GridCalc.
-- A first visit opens on the sample sheet (working formulas and intentional error examples) with a dismissible guide that jumps directly to a fixable error or starts a blank sheet; later visits restore the sheet saved in this browser. Demos → Sample sheet loads it again.
+- A first visit opens on the sample sheet (working formulas and intentional error examples) with a dismissible guide that jumps directly to a fixable error or starts a blank sheet; later visits restore the sheet saved in this browser. Demos → Sample sheet loads it again, and Sheet → Previous sheet brings back whatever a demo, import, restore or Clear replaced.
 - A "10k-row stress test" entry in the toolbar's Demos menu loads about 60,000 cells and 30,000 formulas to demonstrate scale.
 - Reviewers may read the README, `docs/ARCHITECTURE.md` and `docs/FUNCTIONS.md` alongside the app.
 
@@ -49,7 +49,7 @@ Core requirements it must visibly satisfy:
 ## Brand Commitments
 
 - Name: GridCalc. Favicon at `src/app/icon.svg`.
-- Three themes: light, dark and semi (a dark interface around a white sheet). The app follows the system setting until the user picks one; the page metadata's theme colour follows the system setting.
+- Three themes: light, dark and semi (a dark interface around a white sheet), plus a System option, the default, that follows the device setting; the page metadata's theme colour follows the system setting.
 
 ## Evidence on Hand
 

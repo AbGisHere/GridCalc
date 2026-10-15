@@ -5,6 +5,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.10] - 2026-10-15
+
+### Added
+- **Previous sheet** in the Sheet menu brings back the sheet that the last demo, import, restore or Clear replaced, even after a reload. The replaced sheet is kept in this browser and validated like the saved sheet when read back.
+- A circular reference's explanation lists each cell in the loop as a link (**Loop L1 → L2 → L1**), and the loop is outlined in red on the grid while it is explained.
+- **Ctrl/⌘ + .** applies the suggested fix, as a code editor's quick fix. Apply fix shows the shortcut, and screen readers hear it with the diagnosis.
+- Shortcut hints where the actions are: Undo and Redo show theirs on wide screens, and the error count shows F8. Touch screens hide them.
+- A **System** theme option follows the device's light or dark setting, and keeps following it while the page is open; it is selected until another theme is picked.
+- **Show the demo guide** in the Demos menu reopens a dismissed guide.
+- After a fix, the status bar says how many errors are left on the sheet, down to "no errors left".
+
+### Changed
+- Committing a formula that doesn't parse keeps the selection on that cell, as Excel does, so its diagnosis opens in place. Committed errors are reported in the error colour.
+- The **Circular** metric counts the cells in reference loops across the whole sheet and stays while they remain, instead of counting the loops found by the last recalculation.
+- The first-visit message is read by screen readers only, since the guide already shows it. The guide says "tap one" instead of "press F8" on touch screens, is shorter, and wraps at 60 characters.
+- "Saving…" no longer turns amber or shifts the footer after every edit: both labels share one width.
+- Sheet menu and demo copy points to Previous sheet instead of saying undo is lost on reload.
+
 ## [0.3.9] - 2026-10-15
 
 ### Added

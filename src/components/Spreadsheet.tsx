@@ -41,10 +41,14 @@ import { DemoGuide } from './DemoGuide';
 import { HelpContent } from './HelpContent';
 import { clampColumnWidth, defaultColumnWidths, fittedColumnWidths, ROW_HEIGHT } from './geometry';
 import { Grid, type DragMode, type GridHandle } from './Grid';
-import { formatMs, StatusBar, type SelectionStats } from './StatusBar';
+import { KEYS } from './keys';
+import type { RefMark } from './formulaTokens';
+import { formatMs, StatusBar, type SelectionStats, type StatusMessage } from './StatusBar';
 
 const STORAGE_KEY = 'gridcalc:sheet:v1';
 const WIDTHS_KEY = 'gridcalc:widths:v1';
+/** The sheet the last Restore, Import, demo or Clear replaced, so it can be brought back after a reload too. */
+const PREVIOUS_KEY = 'gridcalc:previous:v1';
 const MAX_CLIPBOARD_CELLS = 250_000;
 const MAX_IMPORT_MB = 20;
 
@@ -70,12 +74,6 @@ interface EditState {
 const recalcSummary = (s: RecalcStats) =>
   `${s.evaluated.toLocaleString()} formula${s.evaluated === 1 ? '' : 's'} recalculated in ${formatMs(s.ms)}`;
 
-/** Status-bar message, with an optional follow-up such as undoing a sheet replacement or showing a new error. */
-interface Toast {
-  text: string;
-  action?: { label: string; run(): void };
-}
-
 interface Clip {
   range: RangeBounds;
   raws: string[][];
@@ -91,6 +89,28 @@ const contentWidths = (engine: SpreadsheetEngine) =>
       return { col: p.col, text: displayValue(engine.getValue(p.row, p.col)) };
     }),
   );
+
+/** Every error cell in reading order, for the error count, F8 / Shift+F8 and the progress shown after a fix. */
+function errorKeysOf(engine: SpreadsheetEngine) {
+  const keys: number[] = [];
+  engine.forEachInRange({ r1: 0, c1: 0, r2: SHEET_ROWS - 1, c2: SHEET_COLS - 1 }, (r, c, rec) => {
+    if (rec.value instanceof CellError) keys.push(cellKey(r, c));
+  });
+  return keys.sort((a, b) => a - b);
+}
+
+/** The saved previous sheet and what replaced it, validated like any other stored data. */
+function readPrevious(): { label: string; cells: Record<string, string> } | null {
+  try {
+    const raw: unknown = JSON.parse(localStorage.getItem(PREVIOUS_KEY) ?? 'null');
+    if (!raw || typeof raw !== 'object') return null;
+    const { label, cells } = raw as Record<string, unknown>;
+    const read = readCells(cells, false);
+    return typeof label === 'string' && read ? { label: label.slice(0, 200), cells: read } : null;
+  } catch {
+    return null;
+  }
+}
 
 const DEMOS = [
   { label: 'Sample sheet', detail: 'Working formulas, then one of each error to fix', data: () => SAMPLE_SHEET, guide: 'sample' as const },
@@ -114,12 +134,16 @@ export default function Spreadsheet() {
   const [assistOff, setAssistOff] = useState(false);
   const [colWidths, setColWidths] = useState(defaultColumnWidths);
   const [showFns, setShowFns] = useState(false);
+  /** The demo on screen, whose guide can be reopened from the Demos menu after it is dismissed. */
   const [demoGuide, setDemoGuide] = useState<'sample' | 'stress' | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
+  /** What replaced the sheet kept under PREVIOUS_KEY, for the Sheet menu's "Previous sheet". */
+  const [previous, setPrevious] = useState<string | null>(null);
   const [diagHidden, setDiagHidden] = useState(false);
   const [copyRange, setCopyRange] = useState<RangeBounds | null>(null);
   const [rendered, setRendered] = useState(0);
-  const [toast, setToast] = useState<Toast>();
-  const [heldToast, setHeldToast] = useState<Toast>();
+  const [toast, setToast] = useState<StatusMessage>();
+  const [heldToast, setHeldToast] = useState<StatusMessage>();
   const say = (text: string) => setToast({ text });
   const [loaded, setLoaded] = useState(false);
   const [savedVersion, setSavedVersion] = useState<number | null>(null);
@@ -181,10 +205,12 @@ export default function Spreadsheet() {
       data = null;
     }
     engine.load(firstVisit ? SAMPLE_SHEET : (data ?? {}));
+    setPrevious(readPrevious()?.label ?? null);
     if (firstVisit) {
       setDemoGuide('sample');
-      // Read once by screen readers too, since focus starts on the sheet rather than the guide.
-      say('Sample sheet: the red cells are intentional errors. Press F8 to jump to one and see it explained.');
+      setGuideOpen(true);
+      // Focus starts on the sheet rather than the guide, so screen readers hear this once; the guide already shows it.
+      setToast({ text: 'Sample sheet: the red cells are intentional errors. Press F8, or choose Try a fix, to see one explained.', quiet: true });
     }
     if (!widths) setColWidths(contentWidths(engine));
     setLoaded(true);
@@ -290,7 +316,23 @@ export default function Spreadsheet() {
     }
     setEdit(null);
     setDemoGuide(guide);
+    setGuideOpen(!!guide);
     const replaced = apply(edits, label);
+    let kept = true;
+    if (hadCells && replaced) {
+      try {
+        localStorage.setItem(PREVIOUS_KEY, JSON.stringify({ label, cells: current }));
+        setPrevious(label);
+      } catch {
+        kept = false;
+        try {
+          localStorage.removeItem(PREVIOUS_KEY);
+        } catch {
+          /* storage unavailable */
+        }
+        setPrevious(null);
+      }
+    }
     // A new sheet gets a fresh layout: columns sized to their contents, so no value is cut off.
     setColWidths(contentWidths(engine));
     setSel(single(0, 0));
@@ -298,8 +340,21 @@ export default function Spreadsheet() {
     gridRef.current?.focus();
     const s = engine.lastStats;
     const text = !engine.cellCount ? 'Sheet cleared' : s ? `${label}: ${engine.cellCount.toLocaleString()} cells, ${s.evaluated.toLocaleString()} formulas evaluated in ${formatMs(s.ms)}` : label;
-    // No confirmation step: replacing the sheet is one undoable edit, and the message offers the undo right there.
-    setToast({ text, action: hadCells && replaced ? undoAction : undefined });
+    // No confirmation step: replacing the sheet is one undoable edit, the message offers the undo right there,
+    // and the replaced sheet stays in the Sheet menu as "Previous sheet" across reloads.
+    setToast({
+      text: kept ? text : `${text}. The replaced sheet was too large to keep as Previous sheet.`,
+      action: hadCells && replaced ? undoAction : undefined,
+    });
+  };
+
+  const bringBackPrevious = () => {
+    const p = readPrevious();
+    if (!p) {
+      setPrevious(null);
+      return say('The previous sheet is no longer saved in this browser.');
+    }
+    replaceSheet(p.cells, 'Previous sheet');
   };
 
   // ------------------------------------------------------------------ editing
@@ -324,15 +379,19 @@ export default function Spreadsheet() {
     if (!edit) return;
     const address = toA1(edit.row, edit.col);
     apply([{ row: edit.row, col: edit.col, raw: normalizeFormula(edit.value) }], `Edit ${address}`);
-    // A committed error is news, not a routine recalculation: say so, and offer to show the diagnosis.
+    // A committed error is news, not a routine recalculation. A formula that doesn't parse keeps the selection,
+    // as Excel refuses to leave it, so its diagnosis opens in place; a calculation error offers to show it.
     const rec = engine.getRecord(edit.row, edit.col);
     const error = rec?.value instanceof CellError && !rec.value.origin ? rec.value : null;
-    if (rec?.diagnostic || error) {
-      const problem = rec?.diagnostic ? `has a formula error: ${rec.diagnostic.message}` : `shows ${error!.code}: ${error!.message}`;
-      setToast({ text: `${address} ${problem}`, action: { label: 'Show', run: () => goTo(address) } });
+    const stay = !!rec?.diagnostic;
+    if (stay) {
+      setToast({ text: `${address} has a formula error: ${rec.diagnostic!.message}`, tone: 'error' });
+      setDiagHidden(false);
+    } else if (error) {
+      setToast({ text: `${address} shows ${error.code}: ${error.message}`, tone: 'error', action: { label: 'Show', run: () => goTo(address) } });
     }
     setEdit(null);
-    const next = clampPos({ row: edit.row + dr, col: edit.col + dc });
+    const next = stay ? { row: edit.row, col: edit.col } : clampPos({ row: edit.row + dr, col: edit.col + dc });
     setSel(single(next.row, next.col));
     gridRef.current?.scrollIntoView(next);
     gridRef.current?.focus();
@@ -665,8 +724,10 @@ export default function Spreadsheet() {
       setEdit({ ...edit, value: fix });
       setCaret(fix.length);
       focusInputAt(fix.length);
-    } else {
-      apply([{ row: active.row, col: active.col, raw: fix }], `Fix ${activeAddress}`);
+    } else if (apply([{ row: active.row, col: active.col, raw: fix }], `Fix ${activeAddress}`)) {
+      // Progress through the sheet's errors, so fixing the last one is a visible ending.
+      const left = errorKeysOf(engine).length;
+      setToast((t) => t && { text: `${t.text} · ${left ? `${left.toLocaleString()} error${left === 1 ? '' : 's'} left` : 'no errors left'}` });
       gridRef.current?.focus();
     }
   };
@@ -783,9 +844,15 @@ export default function Spreadsheet() {
 
   /**
    * F6 / Shift+F6 cycle focus between the toolbar, the name box and the sheet, as in desktop spreadsheets;
-   * Shift+F3 opens or closes the function list, as in Excel.
+   * Shift+F3 opens or closes the function list, as in Excel; Ctrl/⌘+. applies the offered fix, as a code editor's quick fix.
    */
   const onAppKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === '.' && (e.ctrlKey || e.metaKey)) {
+      if (!showDiag || !diagView?.fix) return;
+      e.preventDefault();
+      applyFix(diagView.fix);
+      return;
+    }
     if (e.key === 'F3' && e.shiftKey) {
       e.preventDefault();
       if (showFns) closeFunctions();
@@ -824,6 +891,7 @@ export default function Spreadsheet() {
         start: v.span?.start,
         end: v.span?.end,
         origin: v.origin,
+        loop: v.loop,
         // An error passed on from another cell is fixed at its source, which the panel links to.
         ...(v.origin ? {} : explainRuntimeError(v.code, rec.raw)),
       };
@@ -851,19 +919,29 @@ export default function Spreadsheet() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sel, engine, version]);
 
-  /** Every error cell in reading order, for the status bar's error count and F8 / Shift+F8. */
-  const errorKeys = useMemo(() => {
-    const keys: number[] = [];
-    engine.forEachInRange({ r1: 0, c1: 0, r2: SHEET_ROWS - 1, c2: SHEET_COLS - 1 }, (r, c, rec) => {
-      if (rec.value instanceof CellError) keys.push(cellKey(r, c));
-    });
-    return keys.sort((a, b) => a - b);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [engine, version]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const errorKeys = useMemo(() => errorKeysOf(engine), [engine, version]);
+  /** Cells in a reference loop across the whole sheet; cells that only read a loop carry its error with an origin. */
+  const circular = useMemo(
+    () =>
+      errorKeys.filter((k) => {
+        const v = engine.getRecord(keyRow(k), keyCol(k))?.value;
+        return v instanceof CellError && v.code === '#CIRC!' && !v.origin;
+      }).length,
+    [engine, errorKeys],
+  );
 
-  const refMarks = useMemo(() => (edit ? formulaRefs(edit.value) : []), [edit]);
   const barValue = edit ? edit.value : (activeRec?.raw ?? '');
   const showDiag = !!diagView && !diagHidden;
+  // While a circular reference is explained, its loop is outlined on the grid in the error colour.
+  const refMarks = useMemo<RefMark[]>(() => {
+    if (edit) return formulaRefs(edit.value);
+    if (!showDiag || !diagView?.loop) return [];
+    return [...new Set(diagView.loop)].map((a1) => {
+      const p = parseA1(a1)!;
+      return { start: 0, end: 0, range: { r1: p.row, c1: p.col, r2: p.row, c2: p.col }, color: 'var(--error)' };
+    });
+  }, [edit, showDiag, diagView]);
   const assistOpen = (target: EditState['target']) => edit?.target === target && suggesting;
 
   // The docked panel takes its height from the bottom of the sheet: keep the active cell in view.
@@ -882,7 +960,7 @@ export default function Spreadsheet() {
    * panel isn't a live region itself, so only this one-line summary is read, not its caret line and suggestion.
    */
   const announcement = (() => {
-    const diagnosis = showDiag ? `. ${diagView!.message}${diagView!.fix ? ' A one-click fix is in the diagnostics panel.' : ''}` : '';
+    const diagnosis = showDiag ? `. ${diagView!.message}${diagView!.fix ? ` Press ${KEYS.fix.label} to apply the suggested fix.` : ''}` : '';
     if (edit) return showDiag ? `Problem in formula${diagnosis}` : '';
     if (selectionLabel !== activeAddress) return `${selectionLabel} selected, ${selStats.cells.toLocaleString()} cells`;
     if (!activeRec) return `${activeAddress}, blank`;
@@ -918,9 +996,10 @@ export default function Spreadsheet() {
 
   const sheetActions: { label: string; detail: string; run(): void }[] = [
     { label: 'Download backup', detail: 'Keep cell contents and formulas in a GridCalc file', run: exportBackup },
-    { label: 'Restore backup', detail: 'Replace the sheet with a GridCalc backup; Undo restores it while this page is open', run: () => backupFileRef.current?.click() },
+    { label: 'Restore backup', detail: 'Replace the sheet with a GridCalc backup', run: () => backupFileRef.current?.click() },
     { label: 'Import CSV', detail: 'Replace the sheet with a .csv file', run: () => fileRef.current?.click() },
     { label: 'Export values as CSV', detail: 'Download calculated values; formulas are not included', run: exportCSV },
+    ...(previous ? [{ label: 'Previous sheet', detail: `Bring back the sheet that “${previous}” replaced`, run: bringBackPrevious }] : []),
   ];
   const clearSheet = () => replaceSheet({}, 'Clear sheet');
 
@@ -944,13 +1023,15 @@ export default function Spreadsheet() {
         </div>
 
         <div className="tool-group">
-          <button className="tool" onClick={undo} disabled={!history.canUndo} title={`Undo ${history.peekUndoLabel() ?? ''} (Ctrl/⌘+Z)`}>
+          <button className="tool" onClick={undo} disabled={!history.canUndo} title={`Undo ${history.peekUndoLabel() ?? ''}`} aria-keyshortcuts={KEYS.undo.aria}>
             <Icon name="undo" />
             <span className="tool-label">Undo</span>
+            <kbd className="tool-kbd">{KEYS.undo.label}</kbd>
           </button>
-          <button className="tool" onClick={redo} disabled={!history.canRedo} title={`Redo ${history.peekRedoLabel() ?? ''} (Ctrl/⌘+Y)`}>
+          <button className="tool" onClick={redo} disabled={!history.canRedo} title={`Redo ${history.peekRedoLabel() ?? ''}`} aria-keyshortcuts={KEYS.redo.aria}>
             <Icon name="redo" />
             <span className="tool-label">Redo</span>
+            <kbd className="tool-kbd">{KEYS.redo.label}</kbd>
           </button>
         </div>
 
@@ -966,7 +1047,19 @@ export default function Spreadsheet() {
           >
             {(close) => (
               <>
-                <p className="menu-note">Loading a demo replaces this sheet. Undo restores it while this page is open.</p>
+                <p className="menu-note">Loading a demo replaces this sheet. Undo, or Sheet › Previous sheet, brings it back.</p>
+                {demoGuide && !guideOpen && (
+                  <button
+                    className="menu-item"
+                    onClick={() => {
+                      close();
+                      setGuideOpen(true);
+                    }}
+                  >
+                    <b>Show the demo guide</b>
+                    <span>What to try on this {demoGuide === 'sample' ? 'sample sheet' : 'stress test'}</span>
+                  </button>
+                )}
                 {DEMOS.map((d) => (
                 <button
                   key={d.label}
@@ -1027,7 +1120,7 @@ export default function Spreadsheet() {
                   }}
                 >
                   <b>{engine.cellCount ? `Clear ${engine.cellCount.toLocaleString()} cell${engine.cellCount === 1 ? '' : 's'}` : 'Clear sheet'}</b>
-                  <span>Empty the sheet; Undo restores it while this page is open</span>
+                  <span>Empty the sheet; Previous sheet brings it back</span>
                 </button>
               </>
             )}
@@ -1118,18 +1211,18 @@ export default function Spreadsheet() {
           functionsOpen={showFns}
           onToggleFunctions={() => setShowFns((v) => !v)}
         />
-        {demoGuide && !edit && (
+        {demoGuide && guideOpen && !edit && (
           <DemoGuide
             kind={demoGuide}
             onTryFix={() => {
-              setDemoGuide(null);
+              setGuideOpen(false);
               goTo('H2');
             }}
             onLoadStress={() => replaceSheet(stressSheet(), '10k-row stress test', 'stress')}
             onStartBlank={clearSheet}
             onGoTo={goTo}
             onDismiss={() => {
-              setDemoGuide(null);
+              setGuideOpen(false);
               gridRef.current?.focus();
             }}
           />
@@ -1211,9 +1304,9 @@ export default function Spreadsheet() {
         totalCells={SHEET_ROWS * SHEET_COLS}
         usedCells={engine.cellCount}
         errors={errorKeys.length}
+        circular={circular}
         onNextError={() => jumpToError(false)}
-        message={toast?.text}
-        action={toast?.action}
+        message={toast}
         onHold={(held) => setHeldToast(held ? toast : undefined)}
       />
     </div>

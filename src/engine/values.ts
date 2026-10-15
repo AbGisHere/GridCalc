@@ -39,6 +39,8 @@ export class CellError {
     readonly message: string,
     readonly span?: Span,
     readonly origin?: string,
+    /** For #CIRC!: the cells of the loop in "depends on" order, ending where it starts (A1, B1, A1). */
+    readonly loop?: readonly string[],
   ) {}
 
   /** Re-tag an error read through a reference so the UI can trace it back to its source. */

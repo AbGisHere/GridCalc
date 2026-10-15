@@ -28,19 +28,19 @@ For Vercel deployments, enable **Web Analytics** in the project's Vercel dashboa
 - **Function autocomplete** and a signature hint that highlights the argument you are currently typing. Suggestions fit beside the name box on narrow screens; long signatures and examples wrap within the function reference panel. Choosing a function on a narrow screen closes the reference and focuses the formula bar so editing stays visible.
 - **Drag-to-fill**: formulas are copied with relative references shifted, numeric series are continued, and numbered text counts up. Ctrl+D / Ctrl+R fill down / right.
 - Fill ranges are limited to 250,000 cells per operation, with a recovery message for larger selections. Unchanged destinations do not allocate edits or add undo history.
-- **Undo / redo** for every action, including fills, pastes and sheet loads. Replacing the whole sheet (a demo, a CSV import, a restore or Clear) puts an **Undo** button next to its message in the status bar, so there is no confirmation dialog.
+- **Undo / redo** for every action, including fills, pastes and sheet loads. Replacing the whole sheet (a demo, a CSV import, a restore or Clear) puts an **Undo** button next to its message in the status bar, so there is no confirmation dialog. **Sheet → Previous sheet** brings the replaced sheet back, even after a reload.
 - Copy, cut and paste. Pasting inside the sheet re-targets formula references, and tab-separated data pastes in from Excel or Google Sheets.
 - Resizable columns by dragging or entering a width in the **Sheet** menu, which groups backup/restore and CSV import/export, then the column width, then **Clear N cells** on its own in the error colour. Automatic saving to `localStorage` shows Saved in this browser (Saved on a phone), Saving, or a persistent Not saved state; only a failed save is announced to screen readers. It shows with a visible storage explanation and a **Download backup** action that preserves formulas. CSV export includes calculated values, not formulas. Loading a sheet sizes each whole column to its longest value, so nothing starts cut off.
 - **Works by touch**: on a phone or tablet, a swipe scrolls the sheet, the round grip on the selection's top-left corner drags out a range, the fill handle and column edges drag with a finger, and every control has a tap area of at least 44 px. On phones narrower than 390 px the status bar shortens 10,000,000 to 10M so the engine metrics still fit. On a phone the theme and help share a **⋯** menu, and below 390 px the menu chevrons go, so the toolbar fits on one row down to 320 px.
 - **Editing on a phone or tablet**: tap a cell to select, then edit its contents in the formula bar, or double-tap to start there. Visible **Apply** and **Cancel** controls finish the edit without keyboard shortcuts. The workspace responds to the software keyboard, menus and suggestions scroll within the available height, and controls stay clear of screen cutouts.
-- **Three themes**: Light, Dark, and **Semi**, a dark interface (column letters and row numbers included) around white cells, so the sheet looks the way it would print. The app follows the system's light or dark setting until you pick one in the **Theme** menu (the **⋯** menu on a phone); the choice is saved in the browser and applied before the first paint, so there is no flash.
+- **Three themes**: Light, Dark, and **Semi**, a dark interface (column letters and row numbers included) around white cells, so the sheet looks the way it would print. **System**, the default, follows the device's light or dark setting, including changes while the page is open. Pick one in the **Theme** menu (the **⋯** menu on a phone); the choice is saved in the browser and applied before the first paint, so there is no flash.
 - A status bar that shows the engine at work: how many cells the last edit recalculated and how long it took (the **Recalc** metric pulses with each recalculation, and status messages use the same timing), and how many cells are in the DOM out of 10,000,000. The **?** beside the metrics explains each one. Every edit, undo and redo also gets a short message such as *"Edit B2: 10,008 formulas recalculated in 17.3 ms"*, shown beside the selection's Sum, Average and Count rather than in place of them. Committing a formula that errors says so instead (*"J20 has a formula error: Missing closing parenthesis."*) with a **Show** button that opens its diagnosis.
 - The status bar wraps its feedback and Engine group as space narrows. Numeric selections lead with Sum, Average and Count; **More stats** reveals Min and Max.
 - A **recalculation wave**: after an edit, the recalculated cells light up one dependency level after another, so you can see which cells depended on it. With reduce-motion on it's a single gentle fade, and the copied range's marching ants stand still.
-- Color reinforces the workspace hierarchy across all three themes: green for selection and saved state, blue engine labels, amber saving status, and red errors with tinted cells. Status text and error codes remain visible alongside color.
+- Color reinforces the workspace hierarchy across all three themes: green for selection and save state, blue engine labels, and red errors with tinted cells. Status text and error codes remain visible alongside color.
 - Custom 404 and error pages styled like the app's own error diagnostics.
 - IME composition keeps candidate navigation and confirmation inside both cell editors. Column widths stay between 36 and 2,000 px when resized or restored, with the accepted range shown beside the width field; hiding diagnostics returns keyboard focus to the sheet.
-- **Opens on the sample sheet** on a first visit, so the engine and its error diagnostics show straight away (**Start blank** in its guide empties it); later visits restore the sheet saved in this browser. Open **Demos → Sample sheet** for working formulas and intentional errors, or **Demos → 10k-row stress test** for 60,000 cells and 30,000 formulas. Each demo has a dismissible guide: **Try a fix** (or press F8, which the first-visit message also announces to screen readers), load 10k rows or start blank, or compare recalculation at B2 and B10001. Both the guide and Demos menu explain before loading that a demo replaces the sheet and can be undone.
+- **Opens on the sample sheet** on a first visit, so the engine and its error diagnostics show straight away (**Start blank** in its guide empties it); later visits restore the sheet saved in this browser. Open **Demos → Sample sheet** for working formulas and intentional errors, or **Demos → 10k-row stress test** for 60,000 cells and 30,000 formulas. Each demo has a dismissible guide: **Try a fix** (or press F8; on touch screens the guide says to tap a red cell, and screen readers hear it on load), load 10k rows or start blank, or compare recalculation at B2 and B10001. **Demos → Show the demo guide** reopens it. Both the guide and Demos menu explain before loading that a demo replaces the sheet, and that **Sheet → Previous sheet** brings it back.
 - Toolbar popups dismiss when keyboard focus leaves them; function search keeps a visible focus ring, and editing and panel controls provide hover feedback.
 - Keyboard focus outlines the sheet viewport separately from the selected cell, so a selected cell does not imply that keyboard input is still directed to the grid.
 - **Help & shortcuts** explains touch editing, range selection and fill as well as keyboard commands. On narrow or zoomed layouts it moves into the **⋯** menu instead of disappearing.
@@ -56,7 +56,7 @@ For Vercel deployments, enable **Web Analytics** in the project's Vercel dashboa
 **Dependency tracking**
 - A dependency graph with a spatial index for range references.
 - **Incremental recalculation**: only the transitive dependents of an edit are re-evaluated, in topological order. The status bar shows the count and the time taken.
-- **Circular references** (direct, indirect, or through ranges) are detected with Tarjan's SCC algorithm. They show `#CIRC!` and an explanation such as *"H5 → H6 → H5"*, and never cause an infinite loop or a crash.
+- **Circular references** (direct, indirect, or through ranges) are detected with Tarjan's SCC algorithm. They show `#CIRC!` and an explanation such as *"H5 → H6 → H5"* whose cells are links, the loop is outlined on the grid, and they never cause an infinite loop or a crash. The **Circular** metric counts the cells in loops across the sheet.
 
 **Error diagnostics**
 - Every error explains itself in a panel showing the formula with a **caret under the problem**, a **suggestion**, and, where possible, a verified **one-click fix** labelled **Fixed formula**.
@@ -64,7 +64,8 @@ For Vercel deployments, enable **Web Analytics** in the project's Vercel dashboa
 - Diagnostics dock below the sheet, above the error count, with the formula lined up under the formula bar's text. They never cover cells, and opening them doesn't move the sheet.
 - Live diagnostics appear once you pause typing, and not while the autocomplete is open, so a half-typed name isn't flagged.
 - Errors that flow in from other cells name their source and link to it.
-- The status bar counts the sheet's errors; **Next** (or F8 / Shift+F8) jumps from one to the next, so they're easy to reach on a phone too.
+- The status bar counts the sheet's errors; **Next** (or F8 / Shift+F8) jumps from one to the next, so they're easy to reach on a phone too. **Ctrl/⌘ + .** applies the suggested fix, and the status bar then says how many errors are left.
+- Committing a formula that doesn't parse keeps the selection on it, as Excel does, so its diagnosis opens in place.
 
 ```
 Formula: =SUM(A1, B2
@@ -109,7 +110,7 @@ npm run dev          # http://localhost:3000
 
 ## Backups and CSV
 
-Use **Sheet → Download backup** to save cell contents and formulas as a `.gridcalc.json` file on your device, including any current edit. Use **Sheet → Restore backup** to replace the sheet with that file; Undo restores the previous cell contents while the page is open (undo history isn't saved). Restored columns are fitted to their contents. Backup files preserve raw cells rather than undo history, theme or column widths.
+Use **Sheet → Download backup** to save cell contents and formulas as a `.gridcalc.json` file on your device, including any current edit. Use **Sheet → Restore backup** to replace the sheet with that file; Undo, or **Sheet → Previous sheet** after a reload, brings the replaced sheet back. Restored columns are fitted to their contents. Backup files preserve raw cells rather than undo history, theme or column widths.
 
 Backups use a versioned format and a 20 MB limit. Restore validates the whole file before changing the sheet and rejects invalid addresses, non-text cell data or unsupported versions. If the sheet changes while the file is opening, restore stops so newer work is preserved. All processing stays on your device.
 
@@ -124,7 +125,7 @@ First-time visitors start on the **Sample sheet**, so the formula engine and its
 | **Sample sheet** | Working formulas and intentional errors. Choose **Try a fix**, click a red cell or press **Next** in the status bar to see an explanation and suggested repair. |
 | **10k-row stress test** | About 60,000 cells and 30,000 formulas. Use the guide's jump buttons to edit **B2**, then **B10001**, and compare the **Recalc** counter for a long dependency chain versus its end. |
 
-Loading a demo replaces the current sheet; **Undo** restores it while the page is open. The demo guide can be dismissed. To return to a blank sheet, choose **Start blank** in the guide or **Sheet → Clear**.
+Loading a demo replaces the current sheet; **Undo**, or **Sheet → Previous sheet** after a reload, brings it back. The demo guide can be dismissed. To return to a blank sheet, choose **Start blank** in the guide or **Sheet → Clear**.
 
 ## Deployment
 
@@ -183,6 +184,7 @@ vercel.json            Deploys main only
 | Ctrl/⌘ + C / X / V | Copy, cut, paste |
 | Ctrl/⌘ + D / R | Fill down / right |
 | F8 / Shift + F8 | Next / previous error |
+| Ctrl/⌘ + . | Apply the suggested fix |
 | F9 | Recalculate everything (re-rolls `RAND`) |
 | Shift + F3 | Open or close the function list |
 | Esc, then Tab | Leave the sheet |
