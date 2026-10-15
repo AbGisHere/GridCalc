@@ -13,6 +13,13 @@ describe('CSV', () => {
     );
   });
 
+  it('pads short and sparse rows to the given width', () => {
+    const sparse: string[][] = [['a'], [], []];
+    sparse[2][2] = 'c';
+    expect(toCSV(sparse, 3)).toBe('a,,\r\n,,\r\n,,c');
+    expect(toCSV([['x', 'y']])).toBe('x,y');
+  });
+
   it('leaves numbers alone', () => {
     expect(toCSV([['-5', '+3.2', '42']])).toBe('-5,+3.2,42');
   });

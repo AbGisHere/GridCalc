@@ -38,12 +38,13 @@ export function parseCSV(text: string): string[][] {
  */
 const neutralize = (s: string) => (/^[=+\-@\t\r]/.test(s) && !Number.isFinite(Number(s)) ? `'${s}` : s);
 
-export function toCSV(rows: string[][]): string {
+/** Rows may be short or sparse (holes are empty fields); `width` pads each one to that many fields. */
+export function toCSV(rows: string[][], width = 0): string {
   const esc = (raw: string) => {
     const s = neutralize(raw);
     return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  return rows.map((r) => r.map(esc).join(',')).join('\r\n');
+  return rows.map((r) => r.map(esc).join(',') + ','.repeat(Math.max(0, width - Math.max(r.length, 1)))).join('\r\n');
 }
 
 /** Tab-separated text, as copied from/pasted into other spreadsheets. */

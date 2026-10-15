@@ -63,6 +63,7 @@ export function Grid(props: GridProps) {
   const layout = useMemo(() => new ColumnLayout(colWidths), [colWidths]);
   const rows = engine.rows;
   const hintId = useId();
+  const cellId = (r: number, c: number) => `${hintId}-${r}-${c}`;
   const pointerType = useRef('mouse');
 
   // Latest props for window-level listeners attached during drags.
@@ -278,12 +279,26 @@ export function Grid(props: GridProps) {
   const fullCols = sel.r1 === 0 && sel.r2 === rows - 1;
   const fullRows = sel.c1 === 0 && sel.c2 === layout.count - 1;
 
-  const cells: ReactNode[] = [];
+  // Screen readers get a sparse ARIA grid: one row per visible row, holding a row header and its non-empty cells (plus the
+  // active cell, which aria-activedescendant points at), each placed by aria-rowindex/aria-colindex. Index 1 is the header row and column.
+  const gridRows: ReactNode[] = [];
   const recalced: ReactNode[] = [];
+  const activeShown = active.row >= r0 && active.row <= r1 && active.col >= c0 && active.col <= c1;
   for (let r = r0; r <= r1; r++) {
+    const cells: ReactNode[] = [];
     for (let c = c0; c <= c1; c++) {
       const rec = engine.getRecord(r, c);
-      if (!rec) continue;
+      const place = { left: layout.x(c), top: r * ROW_HEIGHT, width: layout.width(c), height: ROW_HEIGHT };
+      const aria = {
+        id: cellId(r, c),
+        role: 'gridcell',
+        'aria-colindex': c + 2,
+        'aria-selected': r >= sel.r1 && r <= sel.r2 && c >= sel.c1 && c <= sel.c2,
+      };
+      if (!rec) {
+        if (r === active.row && c === active.col) cells.push(<div key={`${r}:${c}`} className="cell" style={place} {...aria} />);
+        continue;
+      }
       const depth = wave?.depths.get(cellKey(r, c));
       if (depth) {
         recalced.push(
@@ -303,13 +318,22 @@ export function Grid(props: GridProps) {
         <div
           key={`${r}:${c}`}
           className={cls}
-          style={{ left: layout.x(c), top: r * ROW_HEIGHT, width: layout.width(c), height: ROW_HEIGHT }}
+          style={place}
           title={isErr ? `${v.code} — ${v.origin ? `from ${v.origin}: ` : ''}${v.message}` : undefined}
+          {...aria}
         >
           {displayValue(v)}
         </div>,
       );
     }
+    gridRows.push(
+      <div key={r} role="row" aria-rowindex={r + 2}>
+        <span className="sr-only" role="rowheader" aria-colindex={1}>
+          {r + 1}
+        </span>
+        {cells}
+      </div>,
+    );
   }
 
   // Vertical grid lines for the visible window (horizontal lines are a CSS background).
@@ -326,12 +350,14 @@ export function Grid(props: GridProps) {
     colHeaders.push(
       <div
         key={c}
+        role="columnheader"
+        aria-colindex={c + 2}
         className={'col-header' + (inSel ? (fullCols ? ' full' : ' in-sel') : '')}
         style={{ left: ROW_HEADER_WIDTH + layout.x(c), width: layout.width(c) }}
         onPointerDown={(e) => onHeaderPointerDown(e, 'col', c)}
       >
         {colToLetters(c)}
-        <div className="col-resizer" onPointerDown={(e) => onResizeStart(e, c)} />
+        <div className="col-resizer" aria-hidden onPointerDown={(e) => onResizeStart(e, c)} />
       </div>,
     );
   }
@@ -355,6 +381,11 @@ export function Grid(props: GridProps) {
   const selRect = rect(sel);
 
   return (
+    <>
+    <p id={hintId} className="sr-only">
+      Arrow keys move between cells. Type to replace a cell, or press Enter or F2 to edit it. Press Escape, then Tab, to
+      leave the sheet. F6 moves between the toolbar, the formula bar, the demo guide and the sheet.
+    </p>
     <div
       ref={scrollerRef}
       className="grid-scroller"
@@ -362,18 +393,19 @@ export function Grid(props: GridProps) {
       onScroll={syncViewport}
       onKeyDown={props.onKeyDown}
       onPointerDownCapture={(e) => { pointerType.current = e.pointerType; }}
-      role="application"
+      role="grid"
       aria-roledescription="spreadsheet"
       aria-label="Spreadsheet"
       aria-describedby={hintId}
+      aria-multiselectable
+      aria-rowcount={rows + 1}
+      aria-colcount={layout.count + 1}
+      aria-activedescendant={activeShown && !editing ? cellId(active.row, active.col) : undefined}
     >
-      <p id={hintId} className="sr-only">
-        Arrow keys move between cells. Type to replace a cell, or press Enter or F2 to edit it. Press Escape, then Tab, to
-        leave the sheet. F6 moves between the toolbar, the formula bar and the sheet.
-      </p>
-      <div className="grid-canvas" style={{ width: ROW_HEADER_WIDTH + layout.total, height: HEADER_HEIGHT + rows * ROW_HEIGHT }}>
-        <div className="col-headers" style={{ width: ROW_HEADER_WIDTH + layout.total }}>
+      <div className="grid-canvas" role="presentation" style={{ width: ROW_HEADER_WIDTH + layout.total, height: HEADER_HEIGHT + rows * ROW_HEIGHT }}>
+        <div className="col-headers" role="row" aria-rowindex={1} style={{ width: ROW_HEADER_WIDTH + layout.total }}>
           <div
+            aria-hidden
             className="corner"
             title="Select all"
             onClick={() => {
@@ -383,19 +415,21 @@ export function Grid(props: GridProps) {
           />
           {colHeaders}
         </div>
-        <div className="row-headers" style={{ height: rows * ROW_HEIGHT }}>
+        {/* The visible row numbers; screen readers get them as each row's header instead. */}
+        <div className="row-headers" aria-hidden style={{ height: rows * ROW_HEIGHT }}>
           {rowHeaders}
         </div>
         <div
           ref={cellsRef}
           className="cells"
+          role="presentation"
           style={{ top: HEADER_HEIGHT, left: ROW_HEADER_WIDTH, width: layout.total, height: rows * ROW_HEIGHT }}
           onPointerDown={onCellsPointerDown}
           onDoubleClick={(e) => props.onDoubleClick(posFromClient(e.clientX, e.clientY), pointerType.current === 'touch')}
         >
           {vlines}
           <Fragment key={wave?.id}>{recalced}</Fragment>
-          {cells}
+          {gridRows}
           {refMarks.map((m, i) => (
             <div key={i} className="ref-mark" style={{ ...rect(m.range), color: m.color }} />
           ))}
@@ -427,5 +461,6 @@ export function Grid(props: GridProps) {
         </div>
       </div>
     </div>
+    </>
   );
 }

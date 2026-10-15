@@ -102,6 +102,7 @@ The sheet is 100,000 rows × 100 columns (10 million cells). The grid is a custo
 - Empty cells render nothing. Horizontal grid lines are one CSS background, and vertical lines are one element per visible column.
 - Column and row headers are `position: sticky` layers inside the same scroller, so they stay aligned without any JavaScript scroll syncing.
 - Selection, the fill handle, reference highlights and the copy marquee are single absolutely-positioned overlays, not per-cell state.
+- For assistive technology the scroller is a sparse ARIA `grid` (`aria-rowcount`/`aria-colcount` cover the whole sheet). Each visible row is a `row` holding a screen-reader-only `rowheader` and its non-empty cells, placed with `aria-rowindex`/`aria-colindex`; the column letters are the header row, and the visible row numbers are hidden from assistive technology in favour of those row headers. Focus stays on the scroller and `aria-activedescendant` points at the active cell, which is always rendered, empty or not.
 
 ## 6. UI state: `src/state/`
 

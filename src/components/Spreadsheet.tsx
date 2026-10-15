@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { Fragment, useCallback, useEffect, useId, useLayoutEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import {
   cellKey,
   colToLetters,
@@ -158,7 +158,8 @@ export default function Spreadsheet() {
   const barInputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const backupFileRef = useRef<HTMLInputElement>(null);
-  const backupRequest = useRef(0);
+  /** Counts file choices, so a file that finishes opening after a newer choice is ignored. */
+  const fileRequest = useRef(0);
   const latestEdit = useRef(edit);
   latestEdit.current = edit;
   const toolbarRef = useRef<HTMLElement>(null);
@@ -787,13 +788,13 @@ export default function Spreadsheet() {
   const exportCSV = () => {
     const b = engine.usedBounds();
     if (!b) return say('The sheet is empty.');
-    const rows: string[][] = [];
-    for (let r = 0; r <= b.r2; r++) {
-      const row: string[] = [];
-      for (let c = 0; c <= b.c2; c++) row.push(displayValue(engine.getValue(r, c)));
-      rows.push(row);
-    }
-    downloadBlob(new Blob([toCSV(rows)], { type: 'text/csv' }), 'gridcalc.csv');
+    // Only non-empty cells are visited; toCSV pads every row to the sheet's width, so a lone value in CV100000 costs
+    // 100,000 short rows rather than 10,000,000 cells.
+    const rows: string[][] = Array.from({ length: b.r2 + 1 }, () => []);
+    engine.forEachInRange(b, (r, c, rec) => {
+      rows[r][c] = displayValue(rec.value);
+    });
+    downloadBlob(new Blob([toCSV(rows, b.c2 + 1)], { type: 'text/csv' }), 'gridcalc.csv');
   };
 
   const exportBackup = () => {
@@ -805,34 +806,42 @@ export default function Spreadsheet() {
     say('Backup download started. It preserves cell contents and formulas, including the current edit.');
   };
 
-  const restoreBackup = async (file: File) => {
-    const request = ++backupRequest.current;
-    if (file.size > MAX_BACKUP_BYTES) return say('This backup exceeds 20 MB. Choose a smaller GridCalc backup. Your sheet has not changed.');
+  /**
+   * Reads and parses a chosen file without letting it replace newer work: it resolves to `undefined` (after saying why)
+   * when another file was chosen meanwhile, or the sheet or the current edit changed while it opened, and to `null`
+   * when the file can't be read or parsed. Choosing a file cancels any file still opening.
+   */
+  const openFile = async <T,>(file: File, maxBytes: number, tooBig: string, retry: string, parse: (text: string) => T | null) => {
+    const request = ++fileRequest.current;
+    if (file.size > maxBytes) return void say(tooBig);
     const beforeVersion = engine.version;
     const beforeEdit = latestEdit.current;
-    let cells: Record<string, string> | null;
+    let value: T | null;
     try {
-      cells = parseBackup(await file.text());
+      value = parse(await file.text());
     } catch {
-      cells = null;
+      value = null;
     }
-    if (request !== backupRequest.current) return;
-    if (!cells) return say('Could not restore this file. Choose a GridCalc .gridcalc.json backup (version 1). Your sheet has not changed.');
+    if (request !== fileRequest.current) return;
     if (engine.version !== beforeVersion || latestEdit.current !== beforeEdit) {
-      return say('Your sheet changed while the backup was opening. Choose Restore backup again when ready.');
+      return void say(`Your sheet changed while ${file.name} was opening. Choose ${retry} again when ready.`);
     }
-    if (edit) commitEdit();
-    replaceSheet(cells, 'Restore backup');
+    if (value && edit) commitEdit();
+    return value;
+  };
+
+  const restoreBackup = async (file: File) => {
+    const tooBig = 'This backup exceeds 20 MB. Choose a smaller GridCalc backup. Your sheet has not changed.';
+    const cells = await openFile(file, MAX_BACKUP_BYTES, tooBig, 'Restore backup', parseBackup);
+    if (cells === null) say('Could not restore this file. Choose a GridCalc .gridcalc.json backup (version 1). Your sheet has not changed.');
+    if (cells) replaceSheet(cells, 'Restore backup');
   };
 
   const importCSV = async (file: File) => {
-    if (file.size > MAX_IMPORT_MB * 1024 * 1024) return say(`${file.name} is larger than ${MAX_IMPORT_MB} MB, so it wasn't imported.`);
-    let rows: string[][];
-    try {
-      rows = parseCSV(await file.text());
-    } catch {
-      return say(`Couldn't read ${file.name}. Check that it's a text CSV file.`);
-    }
+    const tooBig = `${file.name} is larger than ${MAX_IMPORT_MB} MB, so it wasn't imported.`;
+    const rows = await openFile(file, MAX_IMPORT_MB * 1024 * 1024, tooBig, 'Import CSV', parseCSV);
+    if (rows === null) say(`Couldn't read ${file.name}. Check that it's a text CSV file.`);
+    if (!rows) return;
     const data: Record<string, string> = {};
     let clipped = false;
     rows.forEach((row, r) =>
@@ -976,16 +985,16 @@ export default function Spreadsheet() {
   })();
 
   /**
-   * What a screen reader hears when the selection, the active cell's value or its diagnosis changes. The diagnostics
-   * panel isn't a live region itself, so only this one-line summary is read, not its caret line and suggestion.
+   * What a screen reader hears beyond the grid itself. The grid's active cell already reads its value with its row and
+   * column, so this adds the formula behind it and its diagnosis; the diagnostics panel isn't a live region itself, so
+   * only this one-line summary is read, not its caret line and suggestion.
    */
   const announcement = (() => {
-    const diagnosis = showDiag ? `. ${diagView!.message}${diagView!.fix ? ` Press ${KEYS.fix.label} to apply the suggested fix.` : ''}` : '';
-    if (edit) return showDiag ? `Problem in formula${diagnosis}` : '';
+    const diagnosis = showDiag ? `${diagView!.message}${diagView!.fix ? ` Press ${KEYS.fix.label} to apply the suggested fix.` : ''}` : '';
+    if (edit) return showDiag ? `Problem in formula. ${diagnosis}` : '';
     if (selectionLabel !== activeAddress) return `${selectionLabel} selected, ${selStats.cells.toLocaleString()} cells`;
-    if (!activeRec) return `${activeAddress}, blank`;
-    const shown = `${activeAddress}, ${displayValue(activeRec.value)}${activeRec.value instanceof CellError ? ' error' : ''}`;
-    return (activeRec.raw.startsWith('=') ? `${shown}, formula ${activeRec.raw}` : shown) + diagnosis;
+    const formula = activeRec?.raw.startsWith('=') ? `Formula ${activeRec.raw}` : '';
+    return [formula, diagnosis].filter(Boolean).join('. ');
   })();
 
   const syncCellOverlay = (e: React.SyntheticEvent<HTMLInputElement>) => {
@@ -1025,13 +1034,19 @@ export default function Spreadsheet() {
     </>
   );
 
-  const sheetActions: { label: string; detail: string; run(): void }[] = [
-    { label: 'Download backup', detail: 'Keep cell contents and formulas in a GridCalc file', run: exportBackup },
-    { label: 'Restore backup', detail: 'Replace the sheet with a GridCalc backup', run: () => backupFileRef.current?.click() },
-    { label: 'Import CSV', detail: 'Replace the sheet with a .csv file', run: () => fileRef.current?.click() },
-    { label: 'Export values as CSV', detail: 'Download calculated values; formulas are not included', run: exportCSV },
-    ...(previous ? [{ label: 'Previous sheet', detail: `Bring back the sheet that “${previous}” replaced`, run: bringBackPrevious }] : []),
+  /** The Sheet menu's sections: backups (formulas kept), CSV (values only), and recovery. */
+  const sheetSections: { label: string; detail: string; run(): void }[][] = [
+    [
+      { label: 'Download backup', detail: 'Keep cell contents and formulas in a GridCalc file', run: exportBackup },
+      { label: 'Restore backup', detail: 'Replace the sheet with a GridCalc backup', run: () => backupFileRef.current?.click() },
+    ],
+    [
+      { label: 'Import CSV', detail: 'Replace the sheet with a .csv file', run: () => fileRef.current?.click() },
+      { label: 'Export values as CSV', detail: 'Download calculated values; formulas are not included', run: exportCSV },
+    ],
+    previous ? [{ label: 'Previous sheet', detail: `Bring back the sheet that “${previous}” replaced`, run: bringBackPrevious }] : [],
   ];
+  const sheetActions = sheetSections.flat();
   const clearSheet = () => replaceSheet({}, 'Clear sheet');
   const loadDemo = (d: (typeof DEMOS)[number]) => replaceSheet(d.data(), d.label, d.guide);
   const showGuide = () => setGuideOpen(true);
@@ -1163,19 +1178,23 @@ export default function Spreadsheet() {
           >
             {(close) => (
               <>
-                {sheetActions.map((a) => (
-                  <button
-                    key={a.label}
-                    className="menu-item"
-                    onClick={() => {
-                      close();
-                      a.run();
-                    }}
-                  >
-                    <b>{a.label}</b>
-                    <span>{a.detail}</span>
-                  </button>
-                ))}
+                {sheetSections.map((section, i) =>
+                  section.map((a, j) => (
+                    <Fragment key={a.label}>
+                      {i > 0 && j === 0 && <hr className="menu-sep" />}
+                      <button
+                        className="menu-item"
+                        onClick={() => {
+                          close();
+                          a.run();
+                        }}
+                      >
+                        <b>{a.label}</b>
+                        <span>{a.detail}</span>
+                      </button>
+                    </Fragment>
+                  )),
+                )}
                 <ColumnWidthControl
                   key={active.col}
                   column={colToLetters(active.col)}

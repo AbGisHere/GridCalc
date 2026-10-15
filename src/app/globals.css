@@ -464,6 +464,12 @@ button {
   font-size: var(--text-sm);
 }
 
+.menu-sep {
+  margin: 4px 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
 .menu-note {
   margin: 6px 10px 10px;
   color: var(--muted);
@@ -1787,6 +1793,13 @@ kbd {
   background: var(--accent-soft);
 }
 
+/* On the tinted highlight, the description moves from muted to full text colour so it keeps its contrast. */
+.fn-item:hover .fn-desc,
+.fn-item:focus-visible .fn-desc,
+.palette-item[aria-selected='true'] .palette-text span {
+  color: var(--fg);
+}
+
 .fn-detail {
   flex-shrink: 0;
   margin: 0;
@@ -2224,6 +2237,7 @@ kbd {
   }
   .column-width input,
   .column-width button,
+  .fn-item,
   .assist-list li,
   .diag-origin button,
   .diag-fix button {

@@ -5,6 +5,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.14] - 2026-10-15
+
+### Changed
+- **Screen readers get the sheet's structure.** The sheet is now an ARIA grid that is still virtualized: every visible row is a row with its number as the row header, the column letters are the column headers, and each cell carries its row and column position in the full 100,000 × 100 sheet. The active cell is the grid's active descendant, so it is read with its row and column; the live announcement now adds only the formula behind it and any error explanation.
+- The Sheet menu separates backups (formulas kept) from CSV (values only) with dividers.
+- In the function list and the command palette, the highlighted row's description switches to the full text colour for contrast, and function rows are at least 44 px tall on touch screens.
+
+### Fixed
+- **CSV export no longer scales with empty space.** It used to build every position up to the furthest used cell, so one value in CV100000 meant 10,000,000 strings; it now visits only non-empty cells and pads each row as it is written (about 0.15 s for that case).
+- **Importing a CSV can no longer replace newer work.** Like restoring a backup, an import that finishes opening after the sheet or the current edit changed, or after another file was chosen, is set aside with a message. Both now share one guarded file-opening path.
+
 ## [0.3.13] - 2026-10-15
 
 ### Added
